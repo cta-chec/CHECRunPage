@@ -94,4 +94,4 @@ class SubmitPluginBase:
         raise NotImplemented
 
 
-importdir.do(os.path.join(get_root_folder(), "crundb", "modules"), globals())
+

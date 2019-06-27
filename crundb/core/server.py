@@ -96,7 +96,7 @@ class Server:
         self.run_data_path = os.path.join(self.display_path, "db")
         if not os.path.exists(self.run_data_path):
             os.mkdir(self.run_data_path)
-        if not os.path.exist(os.path.join(self.display_path,'build')):
+        if not os.path.exists(os.path.join(self.display_path,'build')):
             os.mkdir(os.path.join(self.display_path,'build'))
 
         self.lib_path = os.path.join(self.path, "crundb")

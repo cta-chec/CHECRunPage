@@ -1,1 +1,1 @@
-from .submitplugin import CHECFiles,  SubmitPluginBase
+from .submitplugin import CHECFiles, SubmitPluginBase
