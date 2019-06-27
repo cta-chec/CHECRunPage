@@ -10,9 +10,10 @@ install_requires = [
     "click",
     # "mysqlclient",
     "jinja2",
-    "googleapiclient",
-    "google_auth_oauthlib",
-    "google"
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    'Sphinx',
 ]
 
 #
@@ -49,7 +50,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     entry_points={
-        "console_scripts": ["chec-db-local=crundb.bin.local_submit:run_local"]
+        "console_scripts": ["chec-runpage-submit=crundb.bin.local_submit:run_local"]
     },
 )
 
