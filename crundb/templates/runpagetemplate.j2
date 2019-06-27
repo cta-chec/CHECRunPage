@@ -1,0 +1,31 @@
+.. _{{data.RUN}}:
+
+{{'#'* data.RUN|length}}
+{{data.RUN}}
+{{'#'* data.RUN|length}}
+
+
+**************
+Run Statistics
+**************
+
+    {% for field,fvalue in data.stats.items() -%}
+    :{{field}}: {{fvalue}}
+    {% endfor %}
+
+
+{% for key, value in diag.items() %}
+{{'*'* value.title|length}}
+{{value.title}}
+{{'*'* value.title|length}}
+
+    {% for field,fvalue in value.stats.items() -%}
+    :{{field}}: {{fvalue}}
+    {% endfor %}
+
+    {% for fig in value.figures %}
+.. image::   {{ fig }}
+    {% endfor %}
+{% endfor %}
+
+

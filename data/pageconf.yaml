@@ -1,0 +1,30 @@
+RunSummary:
+  sourceoptions:
+    'obsdate':
+      label: 'Observation date'
+      sources: ['modstats.triggpat.obsdate','modules.runlog.stats.obsdate']
+    'run_start':
+      label: 'Run start'
+      sources: ['modstats.triggpat.run_start','modules.runlog.stats.Approximate Start Time']
+    'run_length':
+      label: "Run length"
+      sources: ['modstats.triggpat.run_length','modules.runlog.stats.Approximate Duration (min)']
+    'ntriggs':
+      label: "Number of events"
+      sources: ['modstats.triggpat.ntriggs','modules.runlog.stats.Approximate #Events']
+    'type':
+      label: "Run type"
+      sources: ['modules.runlog.stats.Run Type']
+    'tags':
+      label: "Tags"
+      sources: ['tags']
+FileDefs:
+  tiofile: ["*.tio"]
+  r0file: ["*_r0.tio"]
+  r1file: ["*_r1.tio"]
+  trigfile: ["*.sof","*_trig.sof"]
+  monfile: ["*.mon"]
+  ssfile: ["*_ss.hdf5"]
+  runlogfile: ["*.log"]
+  guifile: ["*.gui"]
+  pedfile: ["*_ped.tcal"]

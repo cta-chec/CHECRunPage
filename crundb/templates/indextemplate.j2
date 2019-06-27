@@ -1,0 +1,29 @@
+Welcome to CHECRunDB
+====================
+A CHEC-S run database webpage.
+
+Logged Runs (>2min)
+===================
+.. toctree::
+{%- for run in runs %}
+    {{ run }}
+{%- endfor %}
+    :maxdepth: 1
+    :caption: Contents:
+
+Short runs (<2min)
+==================
+.. toctree::
+{%- for run in shortruns %}
+    {{ run }}
+{%- endfor %}
+    :maxdepth: 1
+    :caption: Contents:
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
