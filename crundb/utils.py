@@ -236,7 +236,7 @@ def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.
     return collection
 
 
-def classify_files_r(folders:list or str,filename_conf:str=os.path.join(get_data_folder(),'pageconf.yaml')):
+def classify_files_r(foldersin:list or str,filename_conf:str=os.path.join(get_data_folder(),'pageconf.yaml')):
     """Summary
 
     Args:
@@ -248,9 +248,9 @@ def classify_files_r(folders:list or str,filename_conf:str=os.path.join(get_data
     """
     folders = []
     files = []
-    if isinstance(folders,str):
-        folders = [folders]
-    for folder in folders:
+    if isinstance(foldersin,str):
+        foldersin = [foldersin]
+    for folder in foldersin:
         dir_structure = glob.glob(folder+'/**',recursive=True)
         for f in dir_structure:
             if os.path.isfile(f):
