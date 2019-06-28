@@ -48,4 +48,8 @@ def __do(path, env):
     for module_name in sorted(
         __get_module_names_in_dir(path)
     ):  # for each found module...
-        env[module_name] = __import__(module_name)  # ... import
+        try:
+            env[module_name] = __import__(module_name)  # ... import
+
+        except ImportError:
+            print(f"Failed to import {module_name}...")

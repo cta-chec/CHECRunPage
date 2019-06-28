@@ -1,7 +1,7 @@
 from ssdaq.data.io import SSDataReader
 from ssm.core import badsspixs
 import numpy as np
-from crundb import SubmitPluginBase
+from crundb.core.submitplugin import SubmitPluginBase
 from matplotlib import pyplot as plt
 from crundb.utils import savefig_to_buffer
 
