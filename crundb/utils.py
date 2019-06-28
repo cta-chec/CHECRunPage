@@ -9,6 +9,7 @@ import io
 import yaml
 from collections import defaultdict
 import re
+import glob
 
 def get_root_folder()->str:
     """Summary
@@ -234,6 +235,29 @@ def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.
             print("unknown format of file at location {}".format(full_path))
     return collection
 
+
+def classify_files_r(folders:list or str,filename_conf:str=os.path.join(get_data_folder(),'pageconf.yaml')):
+    """Summary
+
+    Args:
+        folders (list or str): Description
+        filename_conf (str, optional): Description
+
+    Returns:
+        TYPE: Description
+    """
+    folders = []
+    files = []
+    if isinstance(folders,str):
+        folders = [folders]
+    for folder in folders:
+        dir_structure = glob.glob(folder+'/**',recursive=True)
+        for f in dir_structure:
+            if os.path.isfile(f):
+                files.append(f)
+            if os.path.isdir(f):
+                folders.append(f)
+    return classify_files(files,filename_conf=filename_conf)
 
 def pid_exists(pid: int)->bool:
     """Check whether pid exists in the current process table.
