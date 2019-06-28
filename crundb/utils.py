@@ -104,8 +104,9 @@ def savefig_to_buffer(fig:Figure)->bytes:
     figbuf.seek(0)
     return figbuf.read()
 
-
-
+#needed to make RunFilesRecord pickleable
+def _lam():
+    return None
 
 class RunFilesRecord:
     def __init__(self,run,filedefs,**kwargs):
@@ -116,7 +117,7 @@ class RunFilesRecord:
             filedefs (TYPE): Description
             **kwargs: Description
         """
-        self._record = defaultdict(lambda: None)
+        self._record = defaultdict(_lam)
 
         self._run = run
         for k in filedefs.keys():
@@ -202,6 +203,7 @@ class RunFilesCollection:
             TYPE: Description
         """
         return self._counters
+import crundb
 
 def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.yaml')):
     """Summary
@@ -212,7 +214,7 @@ def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.
     with open(filename_conf) as f:
             conf = yaml.load(f)
     file_def = conf['FileDefs']
-    collection = RunFilesCollection()
+    collection = crundb.utils.RunFilesCollection()
 
 
     for full_path in files:
@@ -226,7 +228,7 @@ def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.
             for fdef,patrns in file_def.items():
                 for patrn in patrns:
                     if re.sub('\*',run_name,patrn) == file:
-                        collection.add(RunFilesRecord(run=run_name,filedefs = file_def,**{fdef:full_path}))
+                        collection.add(crundb.utils.RunFilesRecord(run=run_name,filedefs = file_def,**{fdef:full_path}))
             # else:
             #     #Do something with unmatched files
             #     pass
