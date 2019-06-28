@@ -6,7 +6,9 @@ from signal import SIGTERM
 import errno
 
 import io
-
+import yaml
+from collections import defaultdict
+import re
 
 def get_root_folder()->str:
     """Summary
@@ -100,6 +102,137 @@ def savefig_to_buffer(fig:Figure)->bytes:
     fig.savefig(figbuf, format="png")
     figbuf.seek(0)
     return figbuf.read()
+
+
+
+
+class RunFilesRecord:
+    def __init__(self,run,filedefs,**kwargs):
+        """Summary
+
+        Args:
+            run (TYPE): Description
+            filedefs (TYPE): Description
+            **kwargs: Description
+        """
+        self._record = defaultdict(lambda: None)
+
+        self._run = run
+        for k in filedefs.keys():
+            setattr(self,k,None)
+            self._record[k] = None
+        for k,v in kwargs.items():
+            self._record[k] = [v]
+
+    @property
+    def run(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return self._run
+
+    def __getitem__(self,key):
+        return self._record[key]
+
+    def items(self):
+        return self._record.items()
+
+    def update(self, d):
+        for k,v in d.items():
+            if v is None:
+                continue
+            if self._record[k]is not None:
+               self._record[k] += v
+            else:
+                self._record[k] = v
+
+        for k,v in self._record.items():
+            setattr(self,k,v)
+    def __str__(self):
+        s =f"<RunFilesRecord>:\n{self._run}"
+        for k,v in self._record.items():
+            if v is not None:
+                s +=f'\n{k}: {v}'
+        return s
+
+class RunFilesCollection:
+
+    """Summary
+    """
+
+    def __init__(self):
+        """Summary
+        """
+        self._collection ={}
+        self._counters = defaultdict(int)
+
+    def add(self,record):
+        """Summary
+
+        Args:
+            record (TYPE): Description
+        """
+        if record.run in self._collection:
+            self._collection[record.run].update(record)
+        else:
+            self._collection[record.run] =record
+        for k,v in record.items():
+            if v is not None:
+             self._counters[k] +=1
+    def items(self):
+        return self.collection.items()
+
+    @property
+    def collection(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return self._collection
+
+    @property
+    def counters(self):
+        """Summary
+
+        Returns:
+            TYPE: Description
+        """
+        return self._counters
+
+def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.yaml')):
+    """Summary
+
+    Args:
+        files (TYPE): Description
+    """
+    with open(filename_conf) as f:
+            conf = yaml.load(f)
+    file_def = conf['FileDefs']
+    collection = RunFilesCollection()
+
+
+    for full_path in files:
+        file = os.path.basename(full_path)
+        if file[:3] == 'Run' and file[3]!='_':
+            match= re.search(r'[0-9]+', file)
+            span = match.span()
+            runnumber = file[span[0]:span[1]]
+            run_name = f"Run{runnumber}"
+
+            for fdef,patrns in file_def.items():
+                for patrn in patrns:
+                    if re.sub('\*',run_name,patrn) == file:
+                        collection.add(RunFilesRecord(run=run_name,filedefs = file_def,**{fdef:full_path}))
+            # else:
+            #     #Do something with unmatched files
+            #     pass
+
+        else:
+            print("unknown format of file at location {}".format(full_path))
+    return collection
 
 
 def pid_exists(pid: int)->bool:

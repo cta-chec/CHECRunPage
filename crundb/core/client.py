@@ -2,7 +2,7 @@ import zmq
 import zmq.asyncio
 
 from crundb.core import submitplugin
-
+from crundb import utils
 class Client:
     def __init__(self, ip, port, zmqcontext=None,verbose = False):
         """Summary
@@ -48,12 +48,11 @@ class Client:
         return [p.__name__ for p in submitplugin.SubmitPluginBase.subclasses]
 
     def submit(self, files:list, send=True,dry_run=False):
-        cf = submitplugin.CHECFiles()
-        run_collection = cf.classify_files(files)
+        run_collection = utils.classify_files(files)
         self.pr("Number of input files: {}".format(len(files)))
-        self.pr("Files from {} runs ".format(len(cf._runs_file_collection.keys())))
+        self.pr("Files from {} runs ".format(len(run_collection.collection.keys())))
         self.pr("Type of files:")
-        for key,count in cf._counters.items():
+        for key,count in run_collection.counters.items():
             self.pr(f"  `{key}`: {count}")
         if dry_run:
             return None
