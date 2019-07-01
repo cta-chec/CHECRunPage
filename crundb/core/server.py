@@ -269,12 +269,17 @@ class Server:
         with open(os.path.join(utils.get_data_folder(), "pageconf.yaml")) as f:
             self.page_config = yaml.load(f)
         args = args or self.get_runs_in_db()
+        page_data = {}
+
         for run in args:
             runfilename = os.path.join(self.run_data_path, "{}.pkl".format(run))
             if os.path.exists(runfilename):
                 with open(runfilename, "rb") as f:
                     runobject = pickle.load(f)
+                if len(runobject['modules'])==0:
+                    continue
                 data = self.generate_runpage(runobject)
+                page_data[data['RUN']] = data
 
                 # should be put in separate plugin
                 pconf = self.page_config["RunSummary"]["sourceoptions"]
@@ -287,10 +292,11 @@ class Server:
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
 
+
             else:
                 self.log.error("No run found named {}".format(run))
 
-        self.generate_indexpage()
+        self.generate_indexpage(page_data)
 
     def cmd_generate_html(self, args):
         """Summary
@@ -384,15 +390,10 @@ class Server:
                 lambda x: ":ref:`Run{}`".format(x) if x.isdigit() else "--",
             )
 
-        # print(stats)
         data["stats"] = stats
-        # print(
-        #     "+"*88+'\n',
-        #     data,
-        # )
-        # for m in data["modules"].keys():
-        #     print(runnumber,m,data['modules'][m].keys())
+
         runpagetemplate = self.env.get_template("runpagetemplate.j2")
+
         runpage = runpagetemplate.render(data=data, diag=data["modules"])
 
         runpagefile = open(
@@ -401,7 +402,9 @@ class Server:
         runpagefile.writelines(runpage)
         return data
 
-    def generate_indexpage(self,):
+    def generate_indexpage(self,page_data):
+        from crundb.core import sphinx
+
         if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
                 os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
@@ -415,20 +418,44 @@ class Server:
         for run, tags in sorted(rundb.items()):
             tmp_tags = self.tmp_runlist[run]
             for tag in list(tags) + list(tmp_tags):
-                runtags[tag].append("runs/" + run)
+                runtags[tag].append(run)
 
         for run in runtags["short"]:
             if run in runtags["logged"]:
                 runtags["logged"].remove(run)
 
-        print(runtags.keys())
-        indexpage = indextemplate.render(
-            runs=runtags["logged"], shortruns=runtags["short"]
-        )
+        indexes = self.page_config['Indexes']
+
+        #Generating index pages for different selections
+        main_toc = []
+        for index,conf in indexes.items():
+            main_toc.append(index)
+            table = []
+            cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
+            toc_path = []
+            for tag in conf['tags']:
+                for run in runtags[tag]:
+                    toc_path.append("runs/"+run)
+                    row = {'Run':":ref:`{}`".format(run)}
+                    for field,settings in conf['fields'].items():
+                        row[settings['label']] = str(nested_access(page_data[run],*(settings['sources'][0].split('.'))))
+
+                    table.append(row)
+            table_rendered = sphinx.simple_tbl(table,cols)
+            toc_rendered = sphinx.toc(toc_path,hidden='')
+            indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
+            with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
+                f.writelines(indexpage)
+
+        #Generating main page
+        toc = sphinx.toc(main_toc, maxdepth = 1)
+        main_pagetemplate = self.env.get_template("main_page.j2")
+        main_page = main_pagetemplate.render(indextoc=toc,)
+
         indexpagefile = open(
             os.path.join(self.display_path, "source", "index.rst"), "w"
         )
-        indexpagefile.writelines(indexpage)
+        indexpagefile.writelines(main_page)
 
 
 if __name__ == "__main__":

@@ -28,3 +28,20 @@ FileDefs:
   runlogfile: ["*.log"]
   guifile: ["*.gui"]
   pedfile: ["*_ped.tcal"]
+Indexes:
+  logged:
+    title: Logged Runs
+    tags: ['logged','short','triggpat']
+    fields:
+      run_length:
+        label: "Run Length"
+        sources: ['stats.Run length']
+      nevents:
+        label: "Number of events"
+        sources: ['stats.Number of events']
+      type:
+        label: "Type"
+        sources: ['stats.Run type']
+      date:
+        label: "Observation Date"
+        sources: ['stats.Observation date']

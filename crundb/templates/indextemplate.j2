@@ -1,10 +1,27 @@
-Welcome to CHECRunDB
+.. _{{title}}:
+
+{{'#'* title|length}}
+{{title}}
+{{'#'* title|length}}
+
+
+{%- for title,table in tables.items() %}
+{{'='* title|length}}
+{{title}}
+{{'='* title|length}}
+{{table.table}}
+{{table.toc}}
+{{ run }}
+{%- endfor %}
+{# Welcome to CHECRunDB
 ====================
 A CHEC-S run database webpage.
-
-Logged Runs (>2min)
+ #}
+{# Logged Runs (>2min)
 ===================
+    {{loggedtbl}}
 .. toctree::
+    :hidden:
 {%- for run in runs %}
     {{ run }}
 {%- endfor %}
@@ -13,17 +30,19 @@ Logged Runs (>2min)
 
 Short runs (<2min)
 ==================
+    {{shorttbl}}
 .. toctree::
+    :hidden:
 {%- for run in shortruns %}
     {{ run }}
 {%- endfor %}
     :maxdepth: 1
     :caption: Contents:
+ #}
 
-
-Indices and tables
+{# Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+* :ref:`search` #}
