@@ -71,8 +71,6 @@ class RecieverDaemonWrapper(Daemon):
         self.set_taskset = set_taskset
         self.core_id = str(core_id)
 
-        # eval("sslogger.setLevel(logging.%s)" % log_level)
-        # sslogger.info("Set logging level to {}".format(log_level))
 
     def run(self):
 
