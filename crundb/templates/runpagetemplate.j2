@@ -9,8 +9,8 @@
 Run Statistics
 **************
 
-    {% for field,fvalue in data.stats.items() -%}
-    :{{field}}: {{fvalue}}
+    {% for fieldkey,field in data.stats.items() -%}
+    :{{field.label}}: {{field.val}}
     {% endfor %}
 
 
@@ -19,8 +19,8 @@ Run Statistics
 {{value.title}}
 {{'*'* value.title|length}}
 
-    {% for field,fvalue in value.stats.items() -%}
-    :{{field}}: {{fvalue}}
+    {% for fieldkey,field in value.stats.items() -%}
+    :{{field.label}}: {{field.val}}
     {% endfor %}
 
     {% for fig in value.figures %}

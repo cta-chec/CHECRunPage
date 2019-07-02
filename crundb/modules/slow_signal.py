@@ -3,8 +3,8 @@ from ssm.core import badsspixs
 import numpy as np
 from crundb.core.submitplugin import SubmitPluginBase
 from matplotlib import pyplot as plt
-from crundb.utils import savefig_to_buffer
-
+from crundb.utils import savefig_to_buffer,make_field
+from crundb.core.sval import SVal
 class SlowSignalSubmit(SubmitPluginBase):
     @property
     def short_name(self):
@@ -54,9 +54,14 @@ class SlowSignalSubmit(SubmitPluginBase):
                 "modules": {#Here goes the data which makes up the entry in the run page
                         "figures": {# Figures
                             "ssamplitude_vs_time": savefig_to_buffer(fig),
+
                             },
                         "title": "Slow Signal",# The heading to be used for this section
-                        "stats":{'Number of good frames': res.shape[0]}# Stats list
+                        "stats":{'nframes': make_field('Number of good frames',SVal(int(res.shape[0]))),
+                                 "rate":make_field('Number of good frames',SVal(res.shape[0]/(ntime[-1]-ntime[0]),'Hz')),
+                                 "maxamp":make_field('Max amplitude',SVal(np.max(av_total_bright)*1e-3,'V',stickyprefix='m')),
+                                 "minamp":make_field('Min amplitude',SVal(np.min(av_total_bright)*1e-3,'V',stickyprefix='m')),
+                                 "avamp":make_field('Min amplitude',SVal(np.mean(av_total_bright)*1e-3,'V',stickyprefix='m'))}# Stats list
                         },
                 }
         plt.close(fig)

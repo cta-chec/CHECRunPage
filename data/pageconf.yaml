@@ -2,19 +2,19 @@ RunSummary:
   sourceoptions:
     'obsdate':
       label: 'Observation date'
-      sources: ['modstats.triggpat.obsdate','modules.runlog.stats.obsdate']
+      sources: ['modstats.triggpat.obsdate','modules.runlog.stats.obsdate.val']
     'run_start':
       label: 'Run start'
-      sources: ['modstats.triggpat.run_start','modules.runlog.stats.Approximate Start Time']
+      sources: ['modstats.triggpat.run_start','modules.runlog.stats.Approximate Start Time.val']
     'run_length':
       label: "Run length"
-      sources: ['modstats.triggpat.run_length','modules.runlog.stats.Approximate Duration (min)']
+      sources: ['modstats.triggpat.run_length','modules.runlog.stats.Approximate Duration (min).val']
     'ntriggs':
       label: "Number of events"
-      sources: ['modstats.triggpat.ntriggs','modules.runlog.stats.Approximate #Events']
+      sources: ['modstats.triggpat.ntriggs','modules.runlog.stats.Approximate #Events.val']
     'type':
       label: "Run type"
-      sources: ['modules.runlog.stats.Run Type']
+      sources: ['modules.runlog.stats.Run Type.val']
     'tags':
       label: "Tags"
       sources: ['tags']
@@ -35,13 +35,13 @@ Indexes:
     fields:
       run_length:
         label: "Run Length"
-        sources: ['stats.Run length']
+        sources: ['stats.run_length.val']
       nevents:
         label: "Number of events"
-        sources: ['stats.Number of events']
+        sources: ['stats.ntriggs.val']
       type:
         label: "Type"
-        sources: ['stats.Run type']
+        sources: ['stats.type.val']
       date:
         label: "Observation Date"
-        sources: ['stats.Observation date']
+        sources: ['stats.obsdate.val']

@@ -1,7 +1,7 @@
 import crundb
 from crundb.utils import Daemon
 from crundb.modules import qchecrunlog
-from crundb.utils import printNiceTimeDelta, nested_access, update_nested_dict
+from crundb.utils import printNiceTimeDelta, nested_access, update_nested_dict,dnest,make_field
 from crundb import utils
 import asyncio
 import logging
@@ -280,8 +280,8 @@ class Server:
                 page_data[data['RUN']] = data
 
                 # should be put in separate plugin
-                pconf = self.page_config["RunSummary"]["sourceoptions"]
-                tstr = data["stats"][pconf["run_length"]["label"]]
+                # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
+                tstr = data["stats"]["run_length"]
                 if len(tstr) > 3:
                     t = datetime.datetime.strptime(tstr, "%H:%M:%S")
                     delta = datetime.timedelta(
@@ -325,9 +325,12 @@ class Server:
 
         for module in data["modules"].keys():
             if "stats" in data["modules"][module]:
-                for name, val in data["modules"][module]["stats"].items():
-                    if val == "-":
-                        data["modules"][module]["stats"][name] = "--"
+                for name, field in data["modules"][module]["stats"].items():
+                    if not isinstance(field,dict):
+                        data["modules"][module]["stats"][name] = {'label':name,'val':field}
+                        field = data["modules"][module]["stats"][name]
+                    if field['val'] == "-":
+                        field['val']= "--"
             # extracting figures and writing them to file from the pickles
             if "figures" in data["modules"][module]:
                 figsnames = []
@@ -348,22 +351,22 @@ class Server:
         data["tags"] = rundb[runnumber]
 
         # populating the root stats field:
-        sourceopts = self.page_config["RunSummary"]["sourceoptions"]
+        sourceopts = dnest(self.page_config,"RunSummary.sourceoptions")#self.page_config["RunSummary"]["sourceoptions"]
         stats = {}
-        for source, opts in sourceopts.items():
+        for fieldkey, opts in sourceopts.items():
             for opt in opts["sources"]:
                 dict_path = opt.split(".")
                 if len(dict_path) > 1 and dict_path[1] not in data["modules"]:
                     continue
-                stats[opts["label"]] = nested_access(data, *dict_path) or "--"
+                stats[fieldkey] = make_field(opts["label"], dnest(data, opt) or "--")
                 break
             else:
-                stats[opts["label"]] = "--"
+                stats[fieldkey] = make_field(opts["label"], "--")
 
         def apply_formating(d, key, type_, fun):
-            inst = d[sourceopts[key]["label"]]
+            inst = d[key]['val']
             if isinstance(inst, type_):
-                d[sourceopts[key]["label"]] = fun(inst)
+                d[key]['val'] = fun(inst)
 
         # prepend a '+' for times that are after middnight
         apply_formating(
@@ -376,14 +379,13 @@ class Server:
         apply_formating(
             stats, "run_length", datetime.timedelta, lambda x: printNiceTimeDelta(x)
         )
-
         if (
             "runlog" in data["modules"]
-            and "Pedestal Run Number" in data["modules"]["runlog"]["stats"]
+            and "Pedestal Run Number" in dnest(data, "modules.runlog.stats")
         ):
             update_nested_dict(
                 data,
-                "modules.runlog.stats.Pedestal Run Number",
+                "modules.runlog.stats.Pedestal Run Number.val",
                 str,
                 lambda x: ":ref:`Run{}`".format(x) if x.isdigit() else "--",
             )

@@ -38,20 +38,7 @@ def get_data_folder()->str:
     return os.path.join(get_root_folder(), "data")
 
 
-def nested_access(d:dict, *keys):
-    """Summary
 
-    Args:
-        d (TYPE): Description
-        *keys: Description
-
-    Returns:
-        TYPE: Description
-    """
-    r = d
-    for k in keys:
-        r = r[k]
-    return r
 
 
 def printNiceTimeDelta(dt: datetime.timedelta)->str:
@@ -71,7 +58,27 @@ def printNiceTimeDelta(dt: datetime.timedelta)->str:
     outAr = ["%02d" % (int(float(x))) for x in outAr]
     out = ":".join(outAr)
     return out
+def dnest(d:dict,path:str):
+    keys = path.split(".")
+    r = d
+    for k in keys:
+        r = r[k]
+    return r
 
+def nested_access(d:dict, *keys):
+    """Summary
+
+    Args:
+        d (TYPE): Description
+        *keys: Description
+
+    Returns:
+        TYPE: Description
+    """
+    r = d
+    for k in keys:
+        r = r[k]
+    return r
 
 def update_nested_dict(d:dict, path:str, type_:type, fun):
     """Summary
@@ -104,6 +111,8 @@ def savefig_to_buffer(fig:Figure)->bytes:
     figbuf.seek(0)
     return figbuf.read()
 
+def make_field(name,val):
+    return {'label':name,'val':val}
 #needed to make RunFilesRecord pickleable
 def _lam():
     return None

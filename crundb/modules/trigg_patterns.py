@@ -22,7 +22,7 @@ from CHECLabPy.utils.mapping import get_superpixel_mapping
 from target_calib import CameraConfiguration
 from CHECLabPy.utils.mapping import get_clp_mapping_from_tc_mapping
 import datetime
-from crundb.utils import savefig_to_buffer
+from crundb.utils import savefig_to_buffer,make_field
 
 class ImagePlotter(Plotter):
     def __init__(self, mapping):
@@ -235,8 +235,8 @@ class TriggerPatternSubmit(SubmitPluginBase):
                             "trig_sps": savefig_to_buffer(p_image3.fig),
                         },
                         "stats": {
-                            "number of triggers": int(np.sum(missedPackets.bincontent))
-                            + reader.n_entries,
+                            "number of triggers": make_field("number of triggers",int(np.sum(missedPackets.bincontent))
+                            + reader.n_entries),
                             "mean rate": "{}{}Hz".format(*get_si_prefix(mean_rate)),
                             "lost trigger packets": int(
                                 np.sum(missedPackets.bincontent)
