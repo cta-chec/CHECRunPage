@@ -29,19 +29,37 @@ FileDefs:
   guifile: ["*.gui"]
   pedfile: ["*_ped.tcal"]
 Indexes:
-  logged:
-    title: Logged Runs
-    tags: ['logged','short','triggpat']
-    fields:
-      run_length:
-        label: "Run Length"
-        sources: ['stats.run_length.val']
-      nevents:
-        label: "Number of events"
-        sources: ['stats.ntriggs.val']
-      type:
-        label: "Type"
-        sources: ['stats.type.val']
-      date:
-        label: "Observation Date"
-        sources: ['stats.obsdate.val']
+  default: &default_fields
+    run_length:
+      label: "Run Length"
+      sources: ['stats.run_length.val']
+    nevents:
+      label: "Number of events"
+      sources: ['stats.ntriggs.val']
+    type:
+      label: "Type"
+      sources: ['stats.type.val']
+    date:
+      label: "Observation Date"
+      sources: ['stats.obsdate.val']
+  pages:
+    logged:
+      title: Logged Runs
+      tags_sel: 'logged ! short'
+      fields: *default_fields
+    obs_runs:
+      title: Observation Runs
+      tags_sel: 'logged  & (Mrk501 | Gamma | Mrk501 | Mrk421 | PG1553 | Unukalhai) ! (short | Pedestal)'
+      fields: *default_fields
+    ped_runs:
+      title: Pedestal Runs
+      tags_sel: 'Pedestal | Ped | PED'
+      fields: *default_fields
+    trigg_runs:
+      title: Runs with trigger patterns
+      tags_sel: 'triggpat'
+      fields: *default_fields
+    # led_run:
+    #   title: LED flashers
+    #   tags_sel: 'LED flashers'
+    #   fields: *default_fields

@@ -3,6 +3,8 @@ from crundb.utils import Daemon
 from crundb.modules import qchecrunlog
 from crundb.utils import printNiceTimeDelta, nested_access, update_nested_dict,dnest,make_field
 from crundb import utils
+from crundb.core import sphinx
+
 import asyncio
 import logging
 import inspect
@@ -403,7 +405,6 @@ class Server:
         return data
 
     def generate_indexpage(self,page_data):
-        from crundb.core import sphinx
 
         if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
@@ -420,32 +421,17 @@ class Server:
             for tag in list(tags) + list(tmp_tags):
                 runtags[tag].append(run)
 
-        for run in runtags["short"]:
-            if run in runtags["logged"]:
-                runtags["logged"].remove(run)
+        # for run in runtags["short"]:
+        #     if run in runtags["logged"]:
+        #         runtags["logged"].remove(run)
 
-        indexes = self.page_config['Indexes']
+        indexes = self.page_config['Indexes']['pages']
 
         #Generating index pages for different selections
         main_toc = []
         for index,conf in indexes.items():
             main_toc.append(index)
-            table = []
-            cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
-            toc_path = []
-            for tag in conf['tags']:
-                for run in runtags[tag]:
-                    toc_path.append("runs/"+run)
-                    row = {'Run':":ref:`{}`".format(run)}
-                    for field,settings in conf['fields'].items():
-                        row[settings['label']] = str(nested_access(page_data[run],*(settings['sources'][0].split('.'))))
-
-                    table.append(row)
-            table_rendered = sphinx.simple_tbl(table,cols)
-            toc_rendered = sphinx.toc(toc_path,hidden='')
-            indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
-            with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
-                f.writelines(indexpage)
+            self.run_sel_page(index,conf,page_data,indextemplate,runtags)
 
         #Generating main page
         toc = sphinx.toc(main_toc, maxdepth = 1)
@@ -456,7 +442,55 @@ class Server:
             os.path.join(self.display_path, "source", "index.rst"), "w"
         )
         indexpagefile.writelines(main_page)
+        print(runtags.keys())
+    def run_sel_page(self,index,conf,page_data,indextemplate,runtags):
+        from crundb.core import parse
+        table = []
+        #defining columns for the table
+        cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
+        toc_path = []
 
+        # Handling parsing
+        tree = parse.grammar.parse(conf['tags_sel'])
+        cv = parse.IniVisitor()
+        cv.visit(tree)
+        ops = []
+
+        for op in cv.operations:
+            if len(op)>1:
+                ops.append(list(op[1:])[::-1])
+            ops.append(op[0])
+
+        if len(ops)==0:
+            ops.append([cv.tags[0]])
+        # Executing operations
+        stack = []
+        for op in ops:
+            if isinstance(op,list):
+                for tag in op:
+                    stack.append(set(runtags[tag]))
+            else:
+                v1 =  stack.pop()
+                v2 = stack.pop()
+                if op == 'and':
+                    stack.append(v1.intersection(v2))
+                elif op == 'or':
+                    stack.append(v1.union(v2))
+                elif op == 'andnot':
+                    stack.append(v2.difference(v1.intersection(v2)))
+        # Create run list page
+        for run in sorted(stack.pop()):
+            toc_path.append("runs/"+run)
+            row = {'Run':":ref:`{}`".format(run)}
+            for field,settings in conf['fields'].items():
+                row[settings['label']] = str(nested_access(page_data[run],*(settings['sources'][0].split('.'))))
+            table.append(row)
+
+        table_rendered = sphinx.simple_tbl(table,cols)
+        toc_rendered = sphinx.toc(toc_path,hidden='')
+        indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
+        with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
+            f.writelines(indexpage)
 
 if __name__ == "__main__":
     server = Server(ip="127.0.0.101", port=7777)
