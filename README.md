@@ -8,6 +8,17 @@ Currently the recommended way to install this package is as a development packag
 
 and adding the `--user` option if not installing in a conda env. This lets changes made to the project automatically propagate to the install without the need to reinstall.
 
+### Contributor
+1. Create a fork of https://github.com/cta-chec/CHECRunPage to your GitHub 
+account
+2. `git clone https://github.com/YOURGITHUBACCOUNT/CHECRunPage.git`
+3. `cd CHECRunPage`
+4. `git remote add upstream https://github.com/cta-chec/CHECRunPage.git`
+* To Update: 
+
+```git fetch upstream && git checkout master &&  git merge upstream/master && git push origin master```
+
+
 ### Requirements
 
 The listed requirements only apply to the server part. To use the submit client and the plugins assume to have a full `cta-conda` enviroment including the `Targetxxx` libs, `CHECLabPy`, `SSDAQ`,`SSM-analysis` etc.
