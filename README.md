@@ -79,7 +79,7 @@ class SlowSignalSubmit(SubmitPluginBase):
                             "ssamplitude_vs_time": savefig_to_buffer(fig),#we send the actual png and not the matplotlib figure
                             },
                         "title": "Slow Signal",# The heading to be used for this section
-                        "stats":{nframes: make_field('Number of good frames',nframes),
+                        "stats":{"nframes": make_field('Number of good frames',nframes),
                                 "rate":make_field('Number of good frames',SVal(rate,'Hz'))}
                         },
                 }
