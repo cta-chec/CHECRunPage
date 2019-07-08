@@ -58,7 +58,7 @@ class SlowSignalSubmit(SubmitPluginBase):
                             },
                         "title": "Slow Signal",# The heading to be used for this section
                         "stats":{'nframes': make_field('Number of good frames',SVal(int(res.shape[0]))),
-                                 "rate":make_field('Number of good frames',SVal(res.shape[0]/(ntime[-1]-ntime[0]),'Hz')),
+                                 "rate":make_field('Frame rate',SVal(res.shape[0]/(ntime[-1]-ntime[0]),'Hz')),
                                  "maxamp":make_field('Max amplitude',SVal(np.max(av_total_bright)*1e-3,'V',stickyprefix='m')),
                                  "minamp":make_field('Min amplitude',SVal(np.min(av_total_bright)*1e-3,'V',stickyprefix='m')),
                                  "avamp":make_field('Min amplitude',SVal(np.mean(av_total_bright)*1e-3,'V',stickyprefix='m'))}# Stats list
