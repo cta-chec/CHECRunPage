@@ -121,7 +121,7 @@ class Server:
             self.loop.run_forever()
         except Exception as e:
             self.log.error("Exception caught while running event loop: {}".format(e))
-
+            print("Exception caught while running event loop: {}".format(e))
         self.loop.close()
 
     def _introspect(self):

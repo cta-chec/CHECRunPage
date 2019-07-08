@@ -8,6 +8,17 @@ Currently the recommended way to install this package is as a development packag
 
 and adding the `--user` option if not installing in a conda env. This lets changes made to the project automatically propagate to the install without the need to reinstall.
 
+### Contributor
+1. Create a fork of https://github.com/cta-chec/CHECRunPage to your GitHub 
+account
+2. `git clone https://github.com/YOURGITHUBACCOUNT/CHECRunPage.git`
+3. `cd CHECRunPage`
+4. `git remote add upstream https://github.com/cta-chec/CHECRunPage.git`
+* To Update: 
+
+```git fetch upstream && git checkout master &&  git merge upstream/master && git push origin master```
+
+
 ### Requirements
 
 The listed requirements only apply to the server part. To use the submit client and the plugins assume to have a full `cta-conda` enviroment including the `Targetxxx` libs, `CHECLabPy`, `SSDAQ`,`SSM-analysis` etc.
@@ -35,7 +46,8 @@ Your own run-page plugin has to inherit from `crundb.SubmitPluginBase` and the s
 ```python
 rom crundb import SubmitPluginBase
 from matplotlib import pyplot as plt
-from crundb.utils import savefig_to_buffer
+from crundb.utils import savefig_to_buffer,make_field
+from crundb.core.sval import SVal
 
 class SlowSignalSubmit(SubmitPluginBase):
     @property
@@ -67,7 +79,8 @@ class SlowSignalSubmit(SubmitPluginBase):
                             "ssamplitude_vs_time": savefig_to_buffer(fig),#we send the actual png and not the matplotlib figure
                             },
                         "title": "Slow Signal",# The heading to be used for this section
-                        "stats":{'Number of good frames': nframes}# Stats list
+                        "stats":{"nframes": make_field('Number of good frames',nframes),
+                                "rate":make_field('Frame rate',SVal(rate,'Hz'))}
                         },
                 }
         #If you use matplotlib it is recomended that you close all the figures after saving them to buffer, 
