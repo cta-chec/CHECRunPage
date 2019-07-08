@@ -353,7 +353,7 @@ class Server:
         data["tags"] = rundb[runnumber]
 
         # populating the root stats field:
-        sourceopts = dnest(self.page_config,"RunSummary.sourceoptions")#self.page_config["RunSummary"]["sourceoptions"]
+        sourceopts = dnest(self.page_config,"RunSummary.sourceoptions")
         stats = {}
         for fieldkey, opts in sourceopts.items():
             for opt in opts["sources"]:

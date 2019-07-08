@@ -11,7 +11,7 @@ grammar = Grammar(
      and       = "&"
      or        = "|"
      andnot    = "!"
-     tag       = ~"[A-Z_0-9+]*"i
+     tag       = ~"[A-Z_0-9]*"i
      ws        = ~"\s*"
      """)
 from parsimonious.nodes import NodeVisitor,rule

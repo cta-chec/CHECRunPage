@@ -5,15 +5,14 @@ import sys
 install_requires = [
     "zmq",
     "numpy",
-    # "matplotlib",
     "pyyaml",
     "click",
-    # "mysqlclient",
     "jinja2",
     "google-api-python-client",
     "google-auth-httplib2",
     "google-auth-oauthlib",
     'Sphinx==1.6.7',
+    'parsimonious'
 ]
 
 #
