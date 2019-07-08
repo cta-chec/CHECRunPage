@@ -80,7 +80,7 @@ class SlowSignalSubmit(SubmitPluginBase):
                             },
                         "title": "Slow Signal",# The heading to be used for this section
                         "stats":{"nframes": make_field('Number of good frames',nframes),
-                                "rate":make_field('Number of good frames',SVal(rate,'Hz'))}
+                                "rate":make_field('Frame rate',SVal(rate,'Hz'))}
                         },
                 }
         #If you use matplotlib it is recomended that you close all the figures after saving them to buffer, 
