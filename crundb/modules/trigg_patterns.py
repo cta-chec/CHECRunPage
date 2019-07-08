@@ -66,7 +66,7 @@ class TriggerPatternSubmit(SubmitPluginBase):
         return self.trigger_pattern_diagnostics(files, save=False, entry=True)
 
     def trigger_pattern_diagnostics(self, files, save, entry=False):
-        run_name = files["Run"]
+        run_name = files.run
         if files['trigfile'] is not None:
             filename = files['trigfile'][0]
         else:

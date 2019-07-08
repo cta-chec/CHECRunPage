@@ -12,7 +12,7 @@ class SlowSignalSubmit(SubmitPluginBase):
 
     def generate_submit(self, files):
         badpixs = badsspixs.get_badpixs()
-        run_name = files["Run"]
+        run_name = files.run
         #Get correct file type
         if files['ssfile'] is not None:
             filename = files['ssfile'][0]
