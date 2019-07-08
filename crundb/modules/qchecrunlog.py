@@ -16,8 +16,6 @@ class QueryCHECRunLog:
         self.datafolder = utils.get_data_folder()
         self.tokenfile = tokenfile or os.path.join(self.datafolder, "token.pickle")
         self.credfile = credfile or os.path.join(self.datafolder, "credentials.json")
-        print(self.tokenfile)
-        print(self.credfile)
         # If modifying these scopes, delete the file token.pickle.
         self.scopes = scopes or [
             "https://www.googleapis.com/auth/spreadsheets.readonly"
@@ -31,10 +29,14 @@ class QueryCHECRunLog:
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.credfile, self.scopes
-                )
-                self.creds = flow.run_local_server()
+                if os.path.exists(self.credfile):
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.credfile, self.scopes
+                    )
+                    self.creds = flow.run_local_server()
+                else:
+                    print(f"no credentials file found at {self.credfile}")
+                    raise RuntimeError
             # Save the credentials for the next run
             with open(self.tokenfile, "wb") as token:
                 pickle.dump(self.creds, token)

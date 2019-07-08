@@ -51,5 +51,6 @@ def __do(path, env):
         try:
             env[module_name] = __import__(module_name)  # ... import
 
-        except ImportError:
+        except ImportError as e:
             print(f"Failed to import {module_name}...")
+            print(f"  {e}")

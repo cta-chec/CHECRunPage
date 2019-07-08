@@ -9,7 +9,10 @@ except:
     print(
         "Try installing it with: `pip install https://github.com/emiddell/dashi/zipball/master`"
     )
-    exit()
+    raise ImportError("\u001b[31mThe dashi package, which is needed for the histograms, seems to be missing!\u001b[0m\n"
+        "Try installing it with: `pip install https://github.com/emiddell/dashi/zipball/master`"
+                        )
+
 import numpy as np
 from matplotlib import pyplot as plt
 from ssdaq.data.io import DataReader
