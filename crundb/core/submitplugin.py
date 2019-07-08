@@ -2,6 +2,7 @@ from . import importdir as _import
 import os as _os
 from crundb.utils import get_root_folder as _get_root_folder
 
+
 class SubmitPluginBase:
 
     """Summary
@@ -32,7 +33,6 @@ class SubmitPluginBase:
         """
         raise NotImplemented
 
+
 # import all plugins
 _import.do(_os.path.join(_get_root_folder(), "crundb", "modules"), globals())
-
-

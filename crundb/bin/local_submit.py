@@ -3,6 +3,7 @@ from crundb.core.client import Client
 from crundb.core.server import Server
 from multiprocessing import Process
 
+
 def serverprocess(port):
     server = Server(ip="127.0.0.101", port=7777)
     server.run()
@@ -45,10 +46,7 @@ def run_local():
         help="generate html pages",
     )
     parser.add_argument(
-        "-v,--verbose",
-        dest="verbose",
-        action="store_true",
-        help="Verbose mode",
+        "-v,--verbose", dest="verbose", action="store_true", help="Verbose mode"
     )
 
     parser.add_argument(
@@ -61,7 +59,7 @@ def run_local():
 
     args = parser.parse_args()
     # print(args)
-    client = Client("127.0.0.101", port=7777,verbose=args.verbose)
+    client = Client("127.0.0.101", port=7777, verbose=args.verbose)
     if args.cmd == "ls":
         print(client.list_submit_plugins())
         exit()
@@ -74,7 +72,7 @@ def run_local():
         commands.append(("update_from_runlog", ""))
 
     if args.cmd == "submit":
-        client.submit(args.args, True,args.dry_run)
+        client.submit(args.args, True, args.dry_run)
     if args.rst:
 
         commands.append(("generate_pages", None))

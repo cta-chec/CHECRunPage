@@ -11,7 +11,8 @@ from collections import defaultdict
 import re
 import glob
 
-def get_root_folder()->str:
+
+def get_root_folder() -> str:
     """Summary
 
     Returns:
@@ -20,7 +21,7 @@ def get_root_folder()->str:
     return os.path.dirname(os.path.dirname(crundb.__file__))
 
 
-def get_dbdisplay_folder()->str:
+def get_dbdisplay_folder() -> str:
     """Summary
 
     Returns:
@@ -29,7 +30,7 @@ def get_dbdisplay_folder()->str:
     return os.path.join(get_root_folder(), "dbdisplay")
 
 
-def get_data_folder()->str:
+def get_data_folder() -> str:
     """Summary
 
     Returns:
@@ -38,10 +39,7 @@ def get_data_folder()->str:
     return os.path.join(get_root_folder(), "data")
 
 
-
-
-
-def printNiceTimeDelta(dt: datetime.timedelta)->str:
+def printNiceTimeDelta(dt: datetime.timedelta) -> str:
     """Summary
 
     Args:
@@ -58,14 +56,17 @@ def printNiceTimeDelta(dt: datetime.timedelta)->str:
     outAr = ["%02d" % (int(float(x))) for x in outAr]
     out = ":".join(outAr)
     return out
-def dnest(d:dict,path:str):
+
+
+def dnest(d: dict, path: str):
     keys = path.split(".")
     r = d
     for k in keys:
         r = r[k]
     return r
 
-def nested_access(d:dict, *keys):
+
+def nested_access(d: dict, *keys):
     """Summary
 
     Args:
@@ -80,7 +81,8 @@ def nested_access(d:dict, *keys):
         r = r[k]
     return r
 
-def update_nested_dict(d:dict, path:str, type_:type, fun):
+
+def update_nested_dict(d: dict, path: str, type_: type, fun):
     """Summary
 
     Args:
@@ -96,8 +98,11 @@ def update_nested_dict(d:dict, path:str, type_:type, fun):
     if isinstance(obj[key_list[-1]], type_):
         obj[key_list[-1]] = fun(obj[key_list[-1]])
 
+
 from matplotlib.figure import Figure
-def savefig_to_buffer(fig:Figure)->bytes:
+
+
+def savefig_to_buffer(fig: Figure) -> bytes:
     """Summary
 
     Args:
@@ -111,14 +116,18 @@ def savefig_to_buffer(fig:Figure)->bytes:
     figbuf.seek(0)
     return figbuf.read()
 
-def make_field(name,val):
-    return {'label':name,'val':val}
-#needed to make RunFilesRecord pickleable
+
+def make_field(name, val):
+    return {"label": name, "val": val}
+
+
+# needed to make RunFilesRecord pickleable
 def _lam():
     return None
 
+
 class RunFilesRecord:
-    def __init__(self,run,filedefs,**kwargs):
+    def __init__(self, run, filedefs, **kwargs):
         """Summary
 
         Args:
@@ -130,9 +139,9 @@ class RunFilesRecord:
 
         self._run = run
         for k in filedefs.keys():
-            setattr(self,k,None)
+            setattr(self, k, None)
             self._record[k] = None
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             self._record[k] = [v]
 
     @property
@@ -144,29 +153,31 @@ class RunFilesRecord:
         """
         return self._run
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         return self._record[key]
 
     def items(self):
         return self._record.items()
 
     def update(self, d):
-        for k,v in d.items():
+        for k, v in d.items():
             if v is None:
                 continue
-            if self._record[k]is not None:
-               self._record[k] += v
+            if self._record[k] is not None:
+                self._record[k] += v
             else:
                 self._record[k] = v
 
-        for k,v in self._record.items():
-            setattr(self,k,v)
+        for k, v in self._record.items():
+            setattr(self, k, v)
+
     def __str__(self):
-        s =f"<RunFilesRecord>:\n{self._run}"
-        for k,v in self._record.items():
+        s = f"<RunFilesRecord>:\n{self._run}"
+        for k, v in self._record.items():
             if v is not None:
-                s +=f'\n{k}: {v}'
+                s += f"\n{k}: {v}"
         return s
+
 
 class RunFilesCollection:
 
@@ -176,10 +187,10 @@ class RunFilesCollection:
     def __init__(self):
         """Summary
         """
-        self._collection ={}
+        self._collection = {}
         self._counters = defaultdict(int)
 
-    def add(self,record):
+    def add(self, record):
         """Summary
 
         Args:
@@ -188,10 +199,11 @@ class RunFilesCollection:
         if record.run in self._collection:
             self._collection[record.run].update(record)
         else:
-            self._collection[record.run] =record
-        for k,v in record.items():
+            self._collection[record.run] = record
+        for k, v in record.items():
             if v is not None:
-             self._counters[k] +=1
+                self._counters[k] += 1
+
     def items(self):
         return self.collection.items()
 
@@ -212,32 +224,40 @@ class RunFilesCollection:
             TYPE: Description
         """
         return self._counters
+
+
 import crundb
 
-def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.yaml')):
+
+def classify_files(
+    files, filename_conf=os.path.join(get_data_folder(), "pageconf.yaml")
+):
     """Summary
 
     Args:
         files (TYPE): Description
     """
     with open(filename_conf) as f:
-            conf = yaml.load(f)
-    file_def = conf['FileDefs']
+        conf = yaml.load(f)
+    file_def = conf["FileDefs"]
     collection = crundb.utils.RunFilesCollection()
-
 
     for full_path in files:
         file = os.path.basename(full_path)
-        if file[:3] == 'Run' and file[3]!='_':
-            match= re.search(r'[0-9]+', file)
+        if file[:3] == "Run" and file[3] != "_":
+            match = re.search(r"[0-9]+", file)
             span = match.span()
-            runnumber = file[span[0]:span[1]]
+            runnumber = file[span[0] : span[1]]
             run_name = f"Run{runnumber}"
 
-            for fdef,patrns in file_def.items():
+            for fdef, patrns in file_def.items():
                 for patrn in patrns:
-                    if re.sub('\*',run_name,patrn) == file:
-                        collection.add(crundb.utils.RunFilesRecord(run=run_name,filedefs = file_def,**{fdef:full_path}))
+                    if re.sub("\*", run_name, patrn) == file:
+                        collection.add(
+                            crundb.utils.RunFilesRecord(
+                                run=run_name, filedefs=file_def, **{fdef: full_path}
+                            )
+                        )
             # else:
             #     #Do something with unmatched files
             #     pass
@@ -247,7 +267,10 @@ def classify_files(files,filename_conf=os.path.join(get_data_folder(),'pageconf.
     return collection
 
 
-def classify_files_r(foldersin:list or str,filename_conf:str=os.path.join(get_data_folder(),'pageconf.yaml')):
+def classify_files_r(
+    foldersin: list or str,
+    filename_conf: str = os.path.join(get_data_folder(), "pageconf.yaml"),
+):
     """Summary
 
     Args:
@@ -259,18 +282,19 @@ def classify_files_r(foldersin:list or str,filename_conf:str=os.path.join(get_da
     """
     folders = []
     files = []
-    if isinstance(foldersin,str):
+    if isinstance(foldersin, str):
         foldersin = [foldersin]
     for folder in foldersin:
-        dir_structure = glob.glob(folder+'/**',recursive=True)
+        dir_structure = glob.glob(folder + "/**", recursive=True)
         for f in dir_structure:
             if os.path.isfile(f):
                 files.append(f)
             if os.path.isdir(f):
                 folders.append(f)
-    return classify_files(files,filename_conf=filename_conf)
+    return classify_files(files, filename_conf=filename_conf)
 
-def pid_exists(pid: int)->bool:
+
+def pid_exists(pid: int) -> bool:
     """Check whether pid exists in the current process table.
     UNIX only.
 

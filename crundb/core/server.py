@@ -1,7 +1,13 @@
 import crundb
 from crundb.utils import Daemon
 from crundb.modules import qchecrunlog
-from crundb.utils import printNiceTimeDelta, nested_access, update_nested_dict,dnest,make_field
+from crundb.utils import (
+    printNiceTimeDelta,
+    nested_access,
+    update_nested_dict,
+    dnest,
+    make_field,
+)
 from crundb import utils
 from crundb.core import sphinx
 
@@ -24,7 +30,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def create_runplot_folder(folder:str)->str:
+def create_runplot_folder(folder: str) -> str:
     """Summary
 
     Args:
@@ -73,7 +79,6 @@ class RecieverDaemonWrapper(Daemon):
         self.set_taskset = set_taskset
         self.core_id = str(core_id)
 
-
     def run(self):
 
         self.server = self.server_cls(**self.kwargs)
@@ -96,8 +101,8 @@ class Server:
         self.run_data_path = os.path.join(self.display_path, "db")
         if not os.path.exists(self.run_data_path):
             os.mkdir(self.run_data_path)
-        if not os.path.exists(os.path.join(self.display_path,'build')):
-            os.mkdir(os.path.join(self.display_path,'build'))
+        if not os.path.exists(os.path.join(self.display_path, "build")):
+            os.mkdir(os.path.join(self.display_path, "build"))
 
         self.lib_path = os.path.join(self.path, "crundb")
         self.template_dir = os.path.join(self.lib_path, "templates")
@@ -173,7 +178,7 @@ class Server:
         ) as rundbfile:
             rundb = pickle.load(rundbfile)
         runnumber = data["RUN"]
-        rundb[runnumber].update(data['tags'])
+        rundb[runnumber].update(data["tags"])
 
         with open(
             os.path.join(self.display_path, "db", "rundb.pkl"), "wb"
@@ -276,10 +281,10 @@ class Server:
             if os.path.exists(runfilename):
                 with open(runfilename, "rb") as f:
                     runobject = pickle.load(f)
-                if len(runobject['modules'])==0:
+                if len(runobject["modules"]) == 0:
                     continue
                 data = self.generate_runpage(runobject)
-                page_data[data['RUN']] = data
+                page_data[data["RUN"]] = data
 
                 # should be put in separate plugin
                 # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
@@ -291,7 +296,6 @@ class Server:
                     )
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
-
 
             else:
                 self.log.error("No run found named {}".format(run))
@@ -328,11 +332,14 @@ class Server:
         for module in data["modules"].keys():
             if "stats" in data["modules"][module]:
                 for name, field in data["modules"][module]["stats"].items():
-                    if not isinstance(field,dict):
-                        data["modules"][module]["stats"][name] = {'label':name,'val':field}
+                    if not isinstance(field, dict):
+                        data["modules"][module]["stats"][name] = {
+                            "label": name,
+                            "val": field,
+                        }
                         field = data["modules"][module]["stats"][name]
-                    if field['val'] == "-":
-                        field['val']= "--"
+                    if field["val"] == "-":
+                        field["val"] = "--"
             # extracting figures and writing them to file from the pickles
             if "figures" in data["modules"][module]:
                 figsnames = []
@@ -353,7 +360,7 @@ class Server:
         data["tags"] = rundb[runnumber]
 
         # populating the root stats field:
-        sourceopts = dnest(self.page_config,"RunSummary.sourceoptions")
+        sourceopts = dnest(self.page_config, "RunSummary.sourceoptions")
         stats = {}
         for fieldkey, opts in sourceopts.items():
             for opt in opts["sources"]:
@@ -366,9 +373,9 @@ class Server:
                 stats[fieldkey] = make_field(opts["label"], "--")
 
         def apply_formating(d, key, type_, fun):
-            inst = d[key]['val']
+            inst = d[key]["val"]
             if isinstance(inst, type_):
-                d[key]['val'] = fun(inst)
+                d[key]["val"] = fun(inst)
 
         # prepend a '+' for times that are after middnight
         apply_formating(
@@ -381,9 +388,8 @@ class Server:
         apply_formating(
             stats, "run_length", datetime.timedelta, lambda x: printNiceTimeDelta(x)
         )
-        if (
-            "runlog" in data["modules"]
-            and "Pedestal Run Number" in dnest(data, "modules.runlog.stats")
+        if "runlog" in data["modules"] and "Pedestal Run Number" in dnest(
+            data, "modules.runlog.stats"
         ):
             update_nested_dict(
                 data,
@@ -404,7 +410,7 @@ class Server:
         runpagefile.writelines(runpage)
         return data
 
-    def generate_indexpage(self,page_data):
+    def generate_indexpage(self, page_data):
 
         if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
@@ -425,72 +431,80 @@ class Server:
         #     if run in runtags["logged"]:
         #         runtags["logged"].remove(run)
 
-        indexes = self.page_config['Indexes']['pages']
+        indexes = self.page_config["Indexes"]["pages"]
 
-        #Generating index pages for different selections
+        # Generating index pages for different selections
         main_toc = []
-        for index,conf in indexes.items():
+        for index, conf in indexes.items():
             main_toc.append(index)
-            self.run_sel_page(index,conf,page_data,indextemplate,runtags)
+            self.run_sel_page(index, conf, page_data, indextemplate, runtags)
 
-        #Generating main page
-        toc = sphinx.toc(main_toc, maxdepth = 1)
+        # Generating main page
+        toc = sphinx.toc(main_toc, maxdepth=1)
         main_pagetemplate = self.env.get_template("main_page.j2")
-        main_page = main_pagetemplate.render(indextoc=toc,)
+        main_page = main_pagetemplate.render(indextoc=toc)
 
         indexpagefile = open(
             os.path.join(self.display_path, "source", "index.rst"), "w"
         )
         indexpagefile.writelines(main_page)
         print(runtags.keys())
-    def run_sel_page(self,index,conf,page_data,indextemplate,runtags):
+
+    def run_sel_page(self, index, conf, page_data, indextemplate, runtags):
         from crundb.core import parse
+
         table = []
-        #defining columns for the table
-        cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
+        # defining columns for the table
+        cols = ["Run"] + [field["label"] for k, field in conf["fields"].items()]
         toc_path = []
 
         # Handling parsing
-        tree = parse.grammar.parse(conf['tags_sel'])
+        tree = parse.grammar.parse(conf["tags_sel"])
         cv = parse.IniVisitor()
         cv.visit(tree)
         ops = []
 
         for op in cv.operations:
-            if len(op)>1:
+            if len(op) > 1:
                 ops.append(list(op[1:])[::-1])
             ops.append(op[0])
 
-        if len(ops)==0:
+        if len(ops) == 0:
             ops.append([cv.tags[0]])
         # Executing operations
         stack = []
         for op in ops:
-            if isinstance(op,list):
+            if isinstance(op, list):
                 for tag in op:
                     stack.append(set(runtags[tag]))
             else:
-                v1 =  stack.pop()
+                v1 = stack.pop()
                 v2 = stack.pop()
-                if op == 'and':
+                if op == "and":
                     stack.append(v1.intersection(v2))
-                elif op == 'or':
+                elif op == "or":
                     stack.append(v1.union(v2))
-                elif op == 'andnot':
+                elif op == "andnot":
                     stack.append(v2.difference(v1.intersection(v2)))
         # Create run list page
         for run in sorted(stack.pop()):
-            toc_path.append("runs/"+run)
-            row = {'Run':":ref:`{}`".format(run)}
-            for field,settings in conf['fields'].items():
-                row[settings['label']] = str(nested_access(page_data[run],*(settings['sources'][0].split('.'))))
+            toc_path.append("runs/" + run)
+            row = {"Run": ":ref:`{}`".format(run)}
+            for field, settings in conf["fields"].items():
+                row[settings["label"]] = str(
+                    nested_access(page_data[run], *(settings["sources"][0].split(".")))
+                )
             table.append(row)
 
-        table_rendered = sphinx.simple_tbl(table,cols)
-        toc_rendered = sphinx.toc(toc_path,hidden='')
-        indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
+        table_rendered = sphinx.simple_tbl(table, cols)
+        toc_rendered = sphinx.toc(toc_path, hidden="")
+        indexpage = indextemplate.render(
+            title=conf["title"],
+            tables={conf["title"]: {"table": table_rendered, "toc": toc_rendered}},
+        )
         with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
             f.writelines(indexpage)
+
 
 if __name__ == "__main__":
     server = Server(ip="127.0.0.101", port=7777)

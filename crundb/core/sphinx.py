@@ -1,8 +1,7 @@
 import jinja2
 
 
-
-def simple_tbl(data:dict,col_keys:list)->str:
+def simple_tbl(data: dict, col_keys: list) -> str:
     """Summary
 
     Args:
@@ -12,7 +11,7 @@ def simple_tbl(data:dict,col_keys:list)->str:
     Returns:
         str: Description
     """
-    tmpl = '''{% for key,l in keys.items() -%}
+    tmpl = """{% for key,l in keys.items() -%}
 {{'='*l }}{{' '}}
 {%- endfor %}
 {#-#}
@@ -32,15 +31,16 @@ def simple_tbl(data:dict,col_keys:list)->str:
 {% for key,l in keys.items() -%}
 {{'='*l }}{{' '}}
 {%- endfor %}
-    '''
-    widths = {key:len(key) for key in col_keys}
+    """
+    widths = {key: len(key) for key in col_keys}
     for row in data:
         for key in col_keys:
-            widths[key] = max((widths[key],len(row[key])))
+            widths[key] = max((widths[key], len(row[key])))
     t = jinja2.Template(tmpl)
-    return t.render(keys=widths,data=data,zip=zip)
+    return t.render(keys=widths, data=data, zip=zip)
 
-def get_toc_tmpl()->str:
+
+def get_toc_tmpl() -> str:
     """Summary
 
     Returns:
@@ -55,7 +55,8 @@ def get_toc_tmpl()->str:
 {%- endfor %}
 """
 
-def toc(sections:list,**kwargs)->str:
+
+def toc(sections: list, **kwargs) -> str:
     """Summary
 
     Args:
@@ -65,6 +66,6 @@ def toc(sections:list,**kwargs)->str:
     Returns:
         str: Description
     """
-    tmpl =get_toc_tmpl()
+    tmpl = get_toc_tmpl()
     t = jinja2.Template(tmpl)
-    return t.render(sections=sections,directives=kwargs)
+    return t.render(sections=sections, directives=kwargs)
