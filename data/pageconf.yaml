@@ -19,7 +19,6 @@ RunSummary:
       label: "Tags"
       sources: ['tags']
 FileDefs:
-  tiofile: ["*.tio"]
   r0file: ["*_r0.tio"]
   r1file: ["*_r1.tio"]
   trigfile: ["*.sof","*_trig.sof"]

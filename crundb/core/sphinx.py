@@ -1,15 +1,15 @@
 import jinja2
 
 
-def simple_tbl(data: dict, col_keys: list) -> str:
-    """Summary
+def simple_tbl(data: list, col_keys: list) -> str:
+    """Generates a simple rst table
 
     Args:
-        data (dict): Description
-        col_keys (list): Description
+        data (list): table data each element is a dict with col_keys and values
+        col_keys (list): The columns of the table
 
     Returns:
-        str: Description
+        str: The table formated for rst
     """
     tmpl = """{% for key,l in keys.items() -%}
 {{'='*l }}{{' '}}
