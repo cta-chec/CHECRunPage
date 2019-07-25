@@ -38,6 +38,32 @@ def get_data_folder() -> str:
     """
     return os.path.join(get_root_folder(), "data")
 
+def get_db_folder() ->str:
+    """Summary
+
+    Returns:
+        str: Description
+    """
+    return os.path.join(get_dbdisplay_folder(),'db')
+
+def get_source_folder() ->str:
+    """Summary
+
+    Returns:
+        str: Description
+    """
+    return os.path.join(get_dbdisplay_folder(),'source')
+
+def create_dir(path:str):
+    """Summary
+
+    Args:
+        path (str): Description
+    """
+    if not os.path.exists(path):
+        print(f"created folder: {path}")
+        os.mkdir(path)
+
 
 def printNiceTimeDelta(dt: datetime.timedelta) -> str:
     """Summary

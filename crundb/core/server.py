@@ -97,12 +97,21 @@ class Server:
         self._com_sock.bind("tcp://{}:{}".format(*self.recv_addr))
         self.log.info('Socket bind at "tcp://{}:{}"'.format(*self.recv_addr))
         self.path = os.path.dirname(os.path.dirname(crundb.__file__))
-        self.display_path = os.path.join(self.path, "dbdisplay")
+        self.display_path = utils.get_dbdisplay_folder()#os.path.join(self.path, "dbdisplay")
         self.run_data_path = os.path.join(self.display_path, "db")
-        if not os.path.exists(self.run_data_path):
-            os.mkdir(self.run_data_path)
-        if not os.path.exists(os.path.join(self.display_path, "build")):
-            os.mkdir(os.path.join(self.display_path, "build"))
+        needed_folders = [self.run_data_path,
+                            os.path.join(self.display_path, "build"),
+                            os.path.join(utils.get_source_folder(),'_static'),
+                            os.path.join(utils.get_source_folder(),'_templates'),
+                            os.path.join(utils.get_source_folder(),'runs')]
+        for nf in needed_folders:
+            utils.create_dir(nf)
+
+        # if not os.path.exists(self.run_data_path):
+        #     os.mkdir(self.run_data_path)
+
+        # if not os.path.exists(os.path.join(self.display_path, "build")):
+        #     os.mkdir(os.path.join(self.display_path, "build"))
 
         self.lib_path = os.path.join(self.path, "crundb")
         self.template_dir = os.path.join(self.lib_path, "templates")
