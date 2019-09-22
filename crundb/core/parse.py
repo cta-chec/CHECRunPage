@@ -59,4 +59,43 @@ class IniVisitor(NodeVisitor):
     def generic_visit(self, node, children):
         return node,children
 
+
+def parse(expr:str,retr_val:dict):
+    """Summary
+
+    Args:
+        expr (str): Description
+        retr_val (dict): Description
+
+    Returns:
+        TYPE: Description
+    """
+    # parsing the grammar
+    tree = grammar.parse(expr)
+    cv = IniVisitor()
+    cv.visit(tree)
+    ops = []
+    for op in cv.operations:
+        if len(op)>1:
+            ops.append(list(op[1:])[::-1])
+        ops.append(op[0])
+
+    if len(ops)==0:
+        ops.append([cv.tags[0]])
+    # Executing operations
+    stack = []
+    for op in ops:
+        if isinstance(op,list):
+            for tag in op:
+                stack.append(set(retr_val[tag]))
+        else:
+            v1 =  stack.pop()
+            v2 = stack.pop()
+            if op == 'and':
+                stack.append(v1.intersection(v2))
+            elif op == 'or':
+                stack.append(v1.union(v2))
+            elif op == 'andnot':
+                stack.append(v2.difference(v1.intersection(v2)))
+    return stack
 # tree = grammar.parse('(run ! f_k) & N ! (G & H)')

@@ -265,6 +265,7 @@ class Server:
             args (TYPE): Description
         """
         print("Generating run pages...")
+        self.n_pages_generated = 0
         self.tmp_runlist = defaultdict(set)
         with open(os.path.join(utils.get_data_folder(), "pageconf.yaml")) as f:
             self.page_config = yaml.load(f)
@@ -297,7 +298,7 @@ class Server:
                 self.log.error("No run found named {}".format(run))
 
         self.generate_indexpage(page_data)
-
+        print("Number of pages generated {}".format(self.n_pages_generated))
     def cmd_generate_html(self, args):
         """Summary
 
@@ -402,6 +403,7 @@ class Server:
             os.path.join(self.display_path, "source", "runs", runnumber + ".rst"), "w"
         )
         runpagefile.writelines(runpage)
+        self.n_pages_generated +=1
         return data
 
     def generate_indexpage(self,page_data):
@@ -443,41 +445,16 @@ class Server:
         )
         indexpagefile.writelines(main_page)
         print(runtags.keys())
+        self.n_pages_generated +=1
+
     def run_sel_page(self,index,conf,page_data,indextemplate,runtags):
         from crundb.core import parse
         table = []
         #defining columns for the table
         cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
         toc_path = []
+        stack = parse.parse(expr=conf['tags_sel'],retr_val=runtags)
 
-        # Handling parsing
-        tree = parse.grammar.parse(conf['tags_sel'])
-        cv = parse.IniVisitor()
-        cv.visit(tree)
-        ops = []
-
-        for op in cv.operations:
-            if len(op)>1:
-                ops.append(list(op[1:])[::-1])
-            ops.append(op[0])
-
-        if len(ops)==0:
-            ops.append([cv.tags[0]])
-        # Executing operations
-        stack = []
-        for op in ops:
-            if isinstance(op,list):
-                for tag in op:
-                    stack.append(set(runtags[tag]))
-            else:
-                v1 =  stack.pop()
-                v2 = stack.pop()
-                if op == 'and':
-                    stack.append(v1.intersection(v2))
-                elif op == 'or':
-                    stack.append(v1.union(v2))
-                elif op == 'andnot':
-                    stack.append(v2.difference(v1.intersection(v2)))
         # Create run list page
         for run in sorted(stack.pop()):
             toc_path.append("runs/"+run)
@@ -491,6 +468,8 @@ class Server:
         indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
         with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
             f.writelines(indexpage)
+        self.n_pages_generated +=1
+
 
 if __name__ == "__main__":
     server = Server(ip="127.0.0.101", port=7777)

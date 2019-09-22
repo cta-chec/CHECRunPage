@@ -4,7 +4,7 @@ from crundb.core.server import Server
 from multiprocessing import Process
 
 def serverprocess(port):
-    server = Server(ip="127.0.0.101", port=7777)
+    server = Server(ip="*", port=7777)
     server.run()
 
 
