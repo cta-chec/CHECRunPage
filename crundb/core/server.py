@@ -410,7 +410,7 @@ class Server:
 
     def generate_indexpage(self, page_data,rundb):
 
-        indextemplate = self.env.get_template("indextemplate.j2")
+        indextemplate = self.env.get_template("run_index_template.j2")
         runtags = defaultdict(list)
         for run, tags in sorted(rundb.items()):
             tmp_tags = self.tmp_runlist[run]
