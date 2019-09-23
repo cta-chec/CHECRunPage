@@ -85,12 +85,39 @@ def printNiceTimeDelta(dt: datetime.timedelta) -> str:
 
 
 def dnest(d: dict, path: str):
+    """Summary
+
+    Args:
+        d (dict): Description
+        path (str): Description
+
+    Returns:
+        TYPE: Description
+    """
     keys = path.split(".")
     r = d
     for k in keys:
         r = r[k]
     return r
 
+def nestd_key_exist(d: dict, path: str):
+    """Summary
+
+    Args:
+        d (dict): Description
+        path (str): Description
+
+    Returns:
+        TYPE: Description
+    """
+    keys = path.split(".")
+    r = d
+    for k in keys:
+        if k not in r:
+            return False
+        r = r[k]
+
+    return True
 
 def nested_access(d: dict, *keys):
     """Summary
@@ -250,9 +277,6 @@ class RunFilesCollection:
             TYPE: Description
         """
         return self._counters
-
-
-import crundb
 
 
 def classify_files(

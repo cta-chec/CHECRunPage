@@ -89,7 +89,7 @@ def query_chec_runlog():
             # Deal with human input
             if "s" in duration_str:
                 tmpdict["Approximate Duration (min)"] = datetime.timedelta(
-                    seconds=int("".join(([d for d in filter(str.isdigit, "123sec")])))
+                    seconds=int("".join(([d for d in filter(str.isdigit, duration_str)])))
                 )
             elif (
                 len(duration_str) > 0

@@ -7,6 +7,7 @@ from crundb.utils import (
     update_nested_dict,
     dnest,
     make_field,
+    nestd_key_exist
 )
 from crundb import utils
 from crundb.core import sphinx
@@ -296,6 +297,7 @@ class Server:
                 data = self.generate_runpage(runobject,rundb)
                 page_data[data["RUN"]] = data
 
+### SEPARATE PLUGIN ###
                 # should be put in separate plugin
                 # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
                 tstr = data["stats"]["run_length"]
@@ -306,7 +308,7 @@ class Server:
                     )
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
-
+### END SEPARATE PLUGIN ###
             else:
                 self.log.error("No run found named {}".format(run))
 
@@ -348,8 +350,10 @@ class Server:
                             "val": field,
                         }
                         field = data["modules"][module]["stats"][name]
-                    if field["val"] == "-":
-                        field["val"] = "--"
+# ### SEPARATE PLUGIN ###
+#                     if field["val"] == "-":
+#                         field["val"] = "--"
+# ### END SEPARATE PLUGIN ###
             # extracting figures and writing them to file from the pickles
             if "figures" in data["modules"][module]:
                 figsnames = []
@@ -364,7 +368,7 @@ class Server:
         data["tags"] = rundb[runnumber]
 
         # populating the root stats field:
-        sourceopts = dnest(self.page_config, "RunSummary.sourceoptions")
+        sourceopts = dnest(self.page_config, "RunPage.RunSummary")
         stats = {}
         for fieldkey, opts in sourceopts.items():
             for opt in opts["sources"]:
@@ -376,33 +380,20 @@ class Server:
             else:
                 stats[fieldkey] = make_field(opts["label"], "--")
 
-        def apply_formating(d, key, type_, fun):
-            inst = d[key]["val"]
-            if isinstance(inst, type_):
-                d[key]["val"] = fun(inst)
-
-        # prepend a '+' for times that are after middnight
-        apply_formating(
-            stats,
-            "run_start",
-            datetime.time,
-            lambda x: "+" + str(x) if x.hour < 6 else x,
-        )
-        # print nice time delta for timedelta instances
-        apply_formating(
-            stats, "run_length", datetime.timedelta, lambda x: printNiceTimeDelta(x)
-        )
-        if "runlog" in data["modules"] and "Pedestal Run Number" in dnest(
-            data, "modules.runlog.stats"
-        ):
-            update_nested_dict(
-                data,
-                "modules.runlog.stats.Pedestal Run Number.val",
-                str,
-                lambda x: ":ref:`Run{}`".format(x) if x.isdigit() else "--",
-            )
-
         data["stats"] = stats
+
+        def apply_formatting(data,keys,cond,func):
+            if nestd_key_exist(data,keys):
+                d = {}
+                exec("c = "+cond,globals(),d)
+                exec("f = "+func,globals(),d)
+                update_nested_dict(data,keys,d['c'],d['f'])
+        for i,form in enumerate(dnest(self.page_config, "RunPage.Formating")):
+            if form['func'] == "apply_formatting":
+                try:
+                    apply_formatting(data,**form["args"])
+                except Exception as e:
+                    print("An exception occured during formatting nr {}: {}".format(i,e))
 
         runpagetemplate = self.env.get_template("runpagetemplate.j2")
 

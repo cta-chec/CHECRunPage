@@ -1,5 +1,5 @@
-RunSummary:
-  sourceoptions:
+RunPage:
+  RunSummary:
     'obsdate':
       label: 'Observation date'
       sources: ['modstats.triggpat.obsdate','modules.runlog.stats.obsdate.val']
@@ -18,6 +18,24 @@ RunSummary:
     'tags':
       label: "Tags"
       sources: ['tags']
+  Formating:
+    - func: apply_formatting
+      args:
+        keys: "stats.run_start"
+        cond: datetime.time
+        func: 'lambda x: "+" + str(x) if x.hour < 6 else x'
+    - func: apply_formatting
+      args:
+        keys: "stats.run_length"
+        cond: datetime.time
+        func: printNiceTimeDelta
+    - func: apply_formatting
+      args:
+        keys: "modules.runlog.stats.Pedestal Run Number.val"
+        cond: str
+        func: 'lambda x: ":ref:`Run{}`".format(x) if x.idsdigit() else "--"'
+
+
 FileDefs:
   r0file: ["*_r0.tio"]
   r1file: ["*_r1.tio"]
