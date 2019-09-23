@@ -13,36 +13,3 @@
 {{table.toc}}
 {{ run }}
 {%- endfor %}
-{# Welcome to CHECRunDB
-====================
-A CHEC-S run database webpage.
- #}
-{# Logged Runs (>2min)
-===================
-    {{loggedtbl}}
-.. toctree::
-    :hidden:
-{%- for run in runs %}
-    {{ run }}
-{%- endfor %}
-    :maxdepth: 1
-    :caption: Contents:
-
-Short runs (<2min)
-==================
-    {{shorttbl}}
-.. toctree::
-    :hidden:
-{%- for run in shortruns %}
-    {{ run }}
-{%- endfor %}
-    :maxdepth: 1
-    :caption: Contents:
- #}
-
-{# Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search` #}

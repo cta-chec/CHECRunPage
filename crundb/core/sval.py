@@ -1,6 +1,7 @@
 import math
 
-def get_si_prefix(value: float,prefix=None,round_=True) -> tuple:
+
+def get_si_prefix(value: float, prefix=None, round_=True) -> tuple:
     """Summary
 
     Args:
@@ -11,7 +12,6 @@ def get_si_prefix(value: float,prefix=None,round_=True) -> tuple:
     Returns:
         tuple: Description
     """
-
 
     prefixes = [
         "a",
@@ -36,20 +36,20 @@ def get_si_prefix(value: float,prefix=None,round_=True) -> tuple:
     if prefix is None:
         i = int(math.floor(math.log10(abs(value))))
         i = int(i / 3)
-    elif prefix == '':
+    elif prefix == "":
         i = 0
         n = 1
     else:
-        p = ' '.join(prefixes)
-        i = (p.find(prefix)+1)//2-6
+        p = " ".join(prefixes)
+        i = (p.find(prefix) + 1) // 2 - 6
         n = 1
     p = math.pow(1000, i)
     ind = i + 6
     if round_:
-        if isinstance(value,int):
-            s = round(value / p, 1+n)
+        if isinstance(value, int):
+            s = round(value / p, 1 + n)
         else:
-            s = round(value / p, 2+n)
+            s = round(value / p, 2 + n)
     else:
         s = value
         ind = 6
@@ -64,18 +64,19 @@ def get_si_prefix(value: float,prefix=None,round_=True) -> tuple:
 
 
 class SVal:
-    def __init__(self, value,unit='',stickyprefix=None,force=False,format_=True):
+    def __init__(self, value, unit="", stickyprefix=None, force=False, format_=True):
         self.value = value
         self.unit = unit
         self.stickyprefix = stickyprefix
         self.force = force
         self.type = type(value)
         self.format = format_
+
     def __repr__(self):
         if self.format:
-            s = "{}{}{}".format(*get_si_prefix(self.value,self.stickyprefix),self.unit)
+            s = "{}{}{}".format(
+                *get_si_prefix(self.value, self.stickyprefix), self.unit
+            )
         else:
             s = f"{self.value}"
         return s
-
-

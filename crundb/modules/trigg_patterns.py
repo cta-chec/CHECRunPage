@@ -9,9 +9,10 @@ except:
     print(
         "Try installing it with: `pip install https://github.com/emiddell/dashi/zipball/master`"
     )
-    raise ImportError("\u001b[31mThe dashi package, which is needed for the histograms, seems to be missing!\u001b[0m\n"
+    raise ImportError(
+        "\u001b[31mThe dashi package, which is needed for the histograms, seems to be missing!\u001b[0m\n"
         "Try installing it with: `pip install https://github.com/emiddell/dashi/zipball/master`"
-                        )
+    )
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -25,7 +26,8 @@ from CHECLabPy.utils.mapping import get_superpixel_mapping
 from target_calib import CameraConfiguration
 from CHECLabPy.utils.mapping import get_clp_mapping_from_tc_mapping
 import datetime
-from crundb.utils import savefig_to_buffer,make_field
+from crundb.utils import savefig_to_buffer, make_field
+
 
 class ImagePlotter(Plotter):
     def __init__(self, mapping):
@@ -66,9 +68,9 @@ class TriggerPatternSubmit(SubmitPluginBase):
         return self.trigger_pattern_diagnostics(files, save=False, entry=True)
 
     def trigger_pattern_diagnostics(self, files, save, entry=False):
-        run_name = files["Run"]
-        if files['trigfile'] is not None:
-            filename = files['trigfile'][0]
+        run_name = files.run
+        if files["trigfile"] is not None:
+            filename = files["trigfile"][0]
         else:
             return None
         reader = DataReader(filename)
@@ -220,46 +222,43 @@ class TriggerPatternSubmit(SubmitPluginBase):
             dbentry = {
                 "RUN": run_name,
                 "modstats": {
-                        "obsdate": date,
-                        "run_start": start_time.time(),
-                        "run_start_timestamp": reader.timestamp,
-                        "ntriggs": reader.n_entries
-                        + int(np.sum(missedPackets.bincontent)),
-                        "run_length": datetime.timedelta(seconds=run_length * 1e-9),
-                        "rate": mean_rate,
+                    "obsdate": date,
+                    "run_start": start_time.time(),
+                    "run_start_timestamp": reader.timestamp,
+                    "ntriggs": reader.n_entries + int(np.sum(missedPackets.bincontent)),
+                    "run_length": datetime.timedelta(seconds=run_length * 1e-9),
+                    "rate": mean_rate,
                 },
                 "modules": {
-                        "figures": {
-                            "trigpat_diag": savefig_to_buffer(fig),
-                            "trig_heatmap_noflashcorr": savefig_to_buffer(p_image.fig),
-                            "trig_heatmap_withflashcorr": savefig_to_buffer(
-                                p_image2.fig
-                            ),
-                            "trig_sps": savefig_to_buffer(p_image3.fig),
-                        },
-                        "stats": {
-                            "number of triggers": make_field("number of triggers",int(np.sum(missedPackets.bincontent))
-                            + reader.n_entries),
-                            "mean rate": "{}{}Hz".format(*get_si_prefix(mean_rate)),
-                            "lost trigger packets": int(
-                                np.sum(missedPackets.bincontent)
-                            ),
-                            "max rate": "{}{}Hz".format(
-                                *get_si_prefix(np.max(triggRate.bincontent))
-                            ),
-                            "min rate": "{}{}Hz".format(
-                                *get_si_prefix(np.min(triggRate.bincontent))
-                            ),
-                            "number of triggering SPs": int(
-                                np.sum(p_image3.ci_trigger.image)
-                            ),
-                            "number of nontriggering SPs": 512
-                            - int(np.sum(p_image3.ci_trigger.image)),
-                            "fraction of triggering SPs": "{0:.2f}%".format(
-                                np.sum(p_image3.ci_trigger.image) / 512.0 * 100
-                            ),
-                        },
-                        "title": "Trigger patterns",
+                    "figures": {
+                        "trigpat_diag": savefig_to_buffer(fig),
+                        "trig_heatmap_noflashcorr": savefig_to_buffer(p_image.fig),
+                        "trig_heatmap_withflashcorr": savefig_to_buffer(p_image2.fig),
+                        "trig_sps": savefig_to_buffer(p_image3.fig),
+                    },
+                    "stats": {
+                        "number of triggers": make_field(
+                            "number of triggers",
+                            int(np.sum(missedPackets.bincontent)) + reader.n_entries,
+                        ),
+                        "mean rate": "{}{}Hz".format(*get_si_prefix(mean_rate)),
+                        "lost trigger packets": int(np.sum(missedPackets.bincontent)),
+                        "max rate": "{}{}Hz".format(
+                            *get_si_prefix(np.max(triggRate.bincontent))
+                        ),
+                        "min rate": "{}{}Hz".format(
+                            *get_si_prefix(np.min(triggRate.bincontent))
+                        ),
+                        "number of triggering SPs": int(
+                            np.sum(p_image3.ci_trigger.image)
+                        ),
+                        "number of nontriggering SPs": 512
+                        - int(np.sum(p_image3.ci_trigger.image)),
+                        "fraction of triggering SPs": "{0:.2f}%".format(
+                            np.sum(p_image3.ci_trigger.image) / 512.0 * 100
+                        ),
+                    },
+                    "title": "Trigger patterns",
                 },
             }
 

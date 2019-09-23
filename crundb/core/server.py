@@ -1,9 +1,16 @@
 import crundb
 from crundb.utils import Daemon
 from crundb.modules import qchecrunlog
-from crundb.utils import printNiceTimeDelta, nested_access, update_nested_dict,dnest,make_field
+from crundb.utils import (
+    printNiceTimeDelta,
+    nested_access,
+    update_nested_dict,
+    dnest,
+    make_field,
+)
 from crundb import utils
 from crundb.core import sphinx
+from crundb.core import parse
 
 import asyncio
 import logging
@@ -24,7 +31,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def create_runplot_folder(folder:str)->str:
+def create_runplot_folder(folder: str) -> str:
     """Summary
 
     Args:
@@ -73,7 +80,6 @@ class RecieverDaemonWrapper(Daemon):
         self.set_taskset = set_taskset
         self.core_id = str(core_id)
 
-
     def run(self):
 
         self.server = self.server_cls(**self.kwargs)
@@ -92,12 +98,15 @@ class Server:
         self._com_sock.bind("tcp://{}:{}".format(*self.recv_addr))
         self.log.info('Socket bind at "tcp://{}:{}"'.format(*self.recv_addr))
         self.path = os.path.dirname(os.path.dirname(crundb.__file__))
-        self.display_path = os.path.join(self.path, "dbdisplay")
+        self.display_path = utils.get_dbdisplay_folder()#os.path.join(self.path, "dbdisplay")
         self.run_data_path = os.path.join(self.display_path, "db")
-        if not os.path.exists(self.run_data_path):
-            os.mkdir(self.run_data_path)
-        if not os.path.exists(os.path.join(self.display_path,'build')):
-            os.mkdir(os.path.join(self.display_path,'build'))
+        needed_folders = [self.run_data_path,
+                            os.path.join(self.display_path, "build"),
+                            os.path.join(utils.get_source_folder(),'_static'),
+                            os.path.join(utils.get_source_folder(),'_templates'),
+                            os.path.join(utils.get_source_folder(),'runs')]
+        for nf in needed_folders:
+            utils.create_dir(nf)
 
         self.lib_path = os.path.join(self.path, "crundb")
         self.template_dir = os.path.join(self.lib_path, "templates")
@@ -173,7 +182,7 @@ class Server:
         ) as rundbfile:
             rundb = pickle.load(rundbfile)
         runnumber = data["RUN"]
-        rundb[runnumber].update(data['tags'])
+        rundb[runnumber].update(data["tags"])
 
         with open(
             os.path.join(self.display_path, "db", "rundb.pkl"), "wb"
@@ -251,13 +260,6 @@ class Server:
     def cmd_update_from_runlog(self, args):
         return self.update_from_runlog()
 
-    def get_runs_in_db(self):
-        with open(
-            os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
-        ) as rundbfile:
-            rundb = pickle.load(rundbfile)
-        return list(rundb.keys())
-
     def cmd_generate_pages(self, args):
         """Summary
 
@@ -267,9 +269,21 @@ class Server:
         print("Generating run pages...")
         self.n_pages_generated = 0
         self.tmp_runlist = defaultdict(set)
+        if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
+            with open(
+                os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
+            ) as rundbfile:
+                rundb = pickle.load(rundbfile)
+        else:
+            print("RST pages could not be generated as no rundb file was found")
+            return
+
         with open(os.path.join(utils.get_data_folder(), "pageconf.yaml")) as f:
-            self.page_config = yaml.load(f)
-        args = args or self.get_runs_in_db()
+            self.page_config = yaml.load(f,Loader=yaml.SafeLoader)
+        args = args or list(rundb.keys())
+
+
+
         page_data = {}
 
         for run in args:
@@ -277,10 +291,10 @@ class Server:
             if os.path.exists(runfilename):
                 with open(runfilename, "rb") as f:
                     runobject = pickle.load(f)
-                if len(runobject['modules'])==0:
+                if len(runobject["modules"]) == 0:
                     continue
-                data = self.generate_runpage(runobject)
-                page_data[data['RUN']] = data
+                data = self.generate_runpage(runobject,rundb)
+                page_data[data["RUN"]] = data
 
                 # should be put in separate plugin
                 # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
@@ -293,11 +307,10 @@ class Server:
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
 
-
             else:
                 self.log.error("No run found named {}".format(run))
 
-        self.generate_indexpage(page_data)
+        self.generate_indexpage(page_data,rundb)
         print("Number of pages generated {}".format(self.n_pages_generated))
     def cmd_generate_html(self, args):
         """Summary
@@ -314,7 +327,7 @@ class Server:
 
         return ret, ret.stderr
 
-    def generate_runpage(self, data):
+    def generate_runpage(self, data, rundb):
         """Summary
 
         Args:
@@ -329,11 +342,14 @@ class Server:
         for module in data["modules"].keys():
             if "stats" in data["modules"][module]:
                 for name, field in data["modules"][module]["stats"].items():
-                    if not isinstance(field,dict):
-                        data["modules"][module]["stats"][name] = {'label':name,'val':field}
+                    if not isinstance(field, dict):
+                        data["modules"][module]["stats"][name] = {
+                            "label": name,
+                            "val": field,
+                        }
                         field = data["modules"][module]["stats"][name]
-                    if field['val'] == "-":
-                        field['val']= "--"
+                    if field["val"] == "-":
+                        field["val"] = "--"
             # extracting figures and writing them to file from the pickles
             if "figures" in data["modules"][module]:
                 figsnames = []
@@ -345,16 +361,10 @@ class Server:
                     )
                 data["modules"][module]["figures"] = figsnames
 
-        # FIXME: should be propagated in some way
-        with open(
-            os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
-        ) as rundbfile:
-            rundb = pickle.load(rundbfile)
-
         data["tags"] = rundb[runnumber]
 
         # populating the root stats field:
-        sourceopts = dnest(self.page_config,"RunSummary.sourceoptions")
+        sourceopts = dnest(self.page_config, "RunSummary.sourceoptions")
         stats = {}
         for fieldkey, opts in sourceopts.items():
             for opt in opts["sources"]:
@@ -367,9 +377,9 @@ class Server:
                 stats[fieldkey] = make_field(opts["label"], "--")
 
         def apply_formating(d, key, type_, fun):
-            inst = d[key]['val']
+            inst = d[key]["val"]
             if isinstance(inst, type_):
-                d[key]['val'] = fun(inst)
+                d[key]["val"] = fun(inst)
 
         # prepend a '+' for times that are after middnight
         apply_formating(
@@ -382,9 +392,8 @@ class Server:
         apply_formating(
             stats, "run_length", datetime.timedelta, lambda x: printNiceTimeDelta(x)
         )
-        if (
-            "runlog" in data["modules"]
-            and "Pedestal Run Number" in dnest(data, "modules.runlog.stats")
+        if "runlog" in data["modules"] and "Pedestal Run Number" in dnest(
+            data, "modules.runlog.stats"
         ):
             update_nested_dict(
                 data,
@@ -406,16 +415,8 @@ class Server:
         self.n_pages_generated +=1
         return data
 
-    def generate_indexpage(self,page_data):
+    def generate_indexpage(self, page_data,rundb):
 
-        if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
-            with open(
-                os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
-            ) as rundbfile:
-                rundb = pickle.load(rundbfile)
-        else:
-            print("Index page could not be generated as no rundb file was found")
-            return
         indextemplate = self.env.get_template("indextemplate.j2")
         runtags = defaultdict(list)
         for run, tags in sorted(rundb.items()):
@@ -423,22 +424,19 @@ class Server:
             for tag in list(tags) + list(tmp_tags):
                 runtags[tag].append(run)
 
-        # for run in runtags["short"]:
-        #     if run in runtags["logged"]:
-        #         runtags["logged"].remove(run)
 
-        indexes = self.page_config['Indexes']['pages']
+        indexes = self.page_config["Indexes"]["pages"]
 
-        #Generating index pages for different selections
+        # Generating index pages for different selections
         main_toc = []
-        for index,conf in indexes.items():
+        for index, conf in indexes.items():
             main_toc.append(index)
-            self.run_sel_page(index,conf,page_data,indextemplate,runtags)
+            self.run_sel_page(index, conf, page_data, indextemplate, runtags)
 
-        #Generating main page
-        toc = sphinx.toc(main_toc, maxdepth = 1)
+        # Generating main page
+        toc = sphinx.toc(main_toc, maxdepth=1)
         main_pagetemplate = self.env.get_template("main_page.j2")
-        main_page = main_pagetemplate.render(indextoc=toc,)
+        main_page = main_pagetemplate.render(indextoc=toc)
 
         indexpagefile = open(
             os.path.join(self.display_path, "source", "index.rst"), "w"
@@ -447,28 +445,36 @@ class Server:
         print(runtags.keys())
         self.n_pages_generated +=1
 
-    def run_sel_page(self,index,conf,page_data,indextemplate,runtags):
-        from crundb.core import parse
+
+    def run_sel_page(self, index, conf, page_data, indextemplate, runtags):
+
         table = []
-        #defining columns for the table
-        cols = ['Run']+[field['label'] for k,field  in conf['fields'].items()]
+        # defining columns for the table
+        cols = ["Run"] + [field["label"] for k, field in conf["fields"].items()]
         toc_path = []
         stack = parse.parse(expr=conf['tags_sel'],retr_val=runtags)
 
+
         # Create run list page
         for run in sorted(stack.pop()):
-            toc_path.append("runs/"+run)
-            row = {'Run':":ref:`{}`".format(run)}
-            for field,settings in conf['fields'].items():
-                row[settings['label']] = str(nested_access(page_data[run],*(settings['sources'][0].split('.'))))
+            toc_path.append("runs/" + run)
+            row = {"Run": ":ref:`{}`".format(run)}
+            for field, settings in conf["fields"].items():
+                row[settings["label"]] = str(
+                    nested_access(page_data[run], *(settings["sources"][0].split(".")))
+                )
             table.append(row)
 
-        table_rendered = sphinx.simple_tbl(table,cols)
-        toc_rendered = sphinx.toc(toc_path,hidden='')
-        indexpage = indextemplate.render(title = conf['title'],tables={conf['title']:{'table':table_rendered,'toc':toc_rendered}})
+        table_rendered = sphinx.simple_tbl(table, cols)
+        toc_rendered = sphinx.toc(toc_path, hidden="")
+        indexpage = indextemplate.render(
+            title=conf["title"],
+            tables={conf["title"]: {"table": table_rendered, "toc": toc_rendered}},
+        )
         with open(os.path.join(self.display_path, "source", f"{index}.rst"), "w") as f:
             f.writelines(indexpage)
         self.n_pages_generated +=1
+
 
 
 if __name__ == "__main__":

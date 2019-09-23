@@ -11,8 +11,8 @@ install_requires = [
     "google-api-python-client",
     "google-auth-httplib2",
     "google-auth-oauthlib",
-    'Sphinx==1.6.7',
-    'parsimonious'
+    "Sphinx==1.6.7",
+    "parsimonious",
 ]
 
 #
