@@ -17,6 +17,10 @@ grammar = Grammar(
      ws        = ~"\s*"
      """
 )
+"""     var       = ~"[A-Z_0-9]*"i
+     lit       = "'" var ws?  "'"
+     tag       = var /
+"""
 from parsimonious.nodes import NodeVisitor
 
 class IniVisitor(NodeVisitor):
@@ -93,6 +97,8 @@ def eval_tag_expr(expr:str,retr_val:dict):
 
     if len(ops)==0:
         ops.append([cv.tags[0]])
+
+    #making an operations stack
     stack = []
     for op in ops:
         if isinstance(op,list):
@@ -100,7 +106,9 @@ def eval_tag_expr(expr:str,retr_val:dict):
                 stack.append(set(retr_val[tag]))
         else:
             stack.append(op)
+
     stack = list(reversed(stack))
+    #exectuing the operations
     val_stack = []
     while len(stack)>0:
         op = stack.pop()

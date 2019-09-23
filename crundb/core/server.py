@@ -110,7 +110,7 @@ class Server:
             utils.create_dir(nf)
 
         self.lib_path = os.path.join(self.path, "crundb")
-        self.template_dir = os.path.join(self.lib_path, "templates")
+        self.template_dir = os.path.join(utils.get_data_folder(), "templates")
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
         if not os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
