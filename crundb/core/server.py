@@ -350,10 +350,10 @@ class Server:
                             "val": field,
                         }
                         field = data["modules"][module]["stats"][name]
-# ### SEPARATE PLUGIN ###
-#                     if field["val"] == "-":
-#                         field["val"] = "--"
-# ### END SEPARATE PLUGIN ###
+### SEPARATE PLUGIN ###
+                    if field["val"] == "-":
+                        field["val"] = "--"
+### END SEPARATE PLUGIN ###
             # extracting figures and writing them to file from the pickles
             if "figures" in data["modules"][module]:
                 figsnames = []
