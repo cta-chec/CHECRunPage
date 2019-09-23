@@ -16,9 +16,7 @@ grammar = Grammar(
      ws        = ~"\s*"
      """
 )
-from parsimonious.nodes import NodeVisitor, rule
-import parsimonious
-
+from parsimonious.nodes import NodeVisitor
 
 class IniVisitor(NodeVisitor):
     def __init__(self):

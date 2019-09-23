@@ -269,6 +269,7 @@ class Server:
         """
         print("Generating run pages...")
         self.n_pages_generated = 0
+        self.n_runs_processed = 0
         self.tmp_runlist = defaultdict(set)
         if os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
@@ -296,7 +297,7 @@ class Server:
                     continue
                 data = self.generate_runpage(runobject,rundb)
                 page_data[data["RUN"]] = data
-
+                self.n_runs_processed += 1
 ### SEPARATE PLUGIN ###
                 # should be put in separate plugin
                 # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
@@ -314,6 +315,7 @@ class Server:
 
         self.generate_indexpage(page_data,rundb)
         print("Number of pages generated {}".format(self.n_pages_generated))
+        print("Number of processed runs {}".format(self.n_runs_processed))
     def cmd_generate_html(self, args):
         """Summary
 

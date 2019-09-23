@@ -33,7 +33,7 @@ RunPage:
       args:
         keys: "modules.runlog.stats.Pedestal Run Number.val"
         cond: str
-        func: 'lambda x: ":ref:`Run{}`".format(x) if x.idsdigit() else "--"'
+        func: 'lambda x: ":ref:`Run{}`".format(x) if x.isdigit() else "--"'
 
 
 FileDefs:
