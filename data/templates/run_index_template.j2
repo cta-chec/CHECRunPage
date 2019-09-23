@@ -1,0 +1,15 @@
+.. _{{title}}:
+
+{{'#'* title|length}}
+{{title}}
+{{'#'* title|length}}
+
+
+{%- for title,table in tables.items() %}
+{{'='* title|length}}
+{{title}}
+{{'='* title|length}}
+{{table.table}}
+{{table.toc}}
+{{ run }}
+{%- endfor %}
