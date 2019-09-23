@@ -445,11 +445,12 @@ class Server:
         # defining columns for the table
         cols = ["Run"] + [field["label"] for k, field in conf["fields"].items()]
         toc_path = []
-        stack = parse.parse(expr=conf['tags_sel'],retr_val=runtags)
+        #evaluate tag selection expression in configuration
+        sel_runs = parse.eval_tag_expr(expr=conf['tags_sel'],retr_val=runtags)
 
 
         # Create run list page
-        for run in sorted(stack.pop()):
+        for run in sorted(sel_runs):
             toc_path.append("runs/" + run)
             row = {"Run": ":ref:`{}`".format(run)}
             for field, settings in conf["fields"].items():

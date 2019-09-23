@@ -1,5 +1,6 @@
 from parsimonious.grammar import Grammar
 
+__all__ =['eval_tag_expr']
 grammar = Grammar(
     """
      #res       = (multiexpr)  (multiexpr)*
@@ -50,7 +51,9 @@ class IniVisitor(NodeVisitor):
         if len(self.tags) == 1:
             self.operations.append((op, self.tags.pop()))
         elif len(self.tags) == 2:
-            self.operations.append((op, self.tags.pop(), self.tags.pop()))
+            v2 = self.tags.pop()
+            v1 = self.tags.pop()
+            self.operations.append((op, v1,v2 ))
         else:
             self.operations.append((op,))
 
@@ -68,7 +71,7 @@ class IniVisitor(NodeVisitor):
 
 
 
-def parse(expr:str,retr_val:dict):
+def eval_tag_expr(expr:str,retr_val:dict):
     """Summary
 
     Args:
@@ -85,25 +88,37 @@ def parse(expr:str,retr_val:dict):
     ops = []
     for op in cv.operations:
         if len(op)>1:
-            ops.append(list(op[1:])[::-1])
+            ops.append(list(op[1:]))
         ops.append(op[0])
 
     if len(ops)==0:
         ops.append([cv.tags[0]])
-    # Executing operations
     stack = []
     for op in ops:
         if isinstance(op,list):
             for tag in op:
                 stack.append(set(retr_val[tag]))
         else:
-            v1 =  stack.pop()
-            v2 = stack.pop()
+            stack.append(op)
+    stack = list(reversed(stack))
+    val_stack = []
+    while len(stack)>0:
+        op = stack.pop()
+        if isinstance(op,str):
+            v1 = val_stack.pop()
+            v2 = val_stack.pop()
             if op == 'and':
                 stack.append(v1.intersection(v2))
             elif op == 'or':
                 stack.append(v1.union(v2))
             elif op == 'andnot':
                 stack.append(v2.difference(v1.intersection(v2)))
-    return stack
-# tree = grammar.parse('(run ! f_k) & N ! (G & H)')
+        else:
+            #This is non-trivial
+            #The current value of the computation is put at
+            #the last element of the list while subsequent values
+            #(to be operated on) are
+            #pushed behind that last value.
+            val_stack.insert(-1,op)
+
+    return val_stack.pop()
