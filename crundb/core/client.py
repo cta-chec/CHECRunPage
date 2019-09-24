@@ -70,10 +70,9 @@ class Client:
             for p in plugins:
                 try:
                     p_data = p.generate_submit(run_files)
-                    if p_data is not None:
-                        for k in ["modules", "modstats"]:
-                            data[k][p.short_name] = p_data[k]
-                        data["tags"].add(p.short_name)
+                    data.update(p_data)
+                    data["tags"].add(p.short_name)
+
                 except Exception as e:
                     print(
                         f"An exception occured while plugin `{p.short_name}` was executing"

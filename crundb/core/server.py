@@ -1,6 +1,6 @@
 import crundb
+from crundb.core import submitplugin
 from crundb.utils import Daemon
-from crundb.modules import qchecrunlog
 from crundb.utils import (
     printNiceTimeDelta,
     nested_access,
@@ -177,7 +177,6 @@ class Server:
         Returns:
             TYPE: Description
         """
-        print("submitting")
         with open(
             os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
         ) as rundbfile:
@@ -217,45 +216,19 @@ class Server:
         Returns:
             TYPE: Description
         """
-        print("Updating runs from runlog...")
-        runs = qchecrunlog.query_chec_runlog()
-        try:
-            with open(
-                os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
-            ) as rundbfile:
-                rundb = pickle.load(rundbfile)
-        except:
-            rundb = defaultdict(set)
-        for runnumber, run in runs.items():
-            if not runnumber.isdigit():
-                continue
-            runfilename = os.path.join(
-                self.run_data_path, "Run{}.pkl".format(runnumber)
-            )
-            tags = rundb["Run{}".format(runnumber)]
-            tags.add("logged")
-            if len(run["Run Type"]) > 1:
-                tags.add(run["Run Type"])
-            if "Object" in run and len(run["Object"]) > 0:
-                tags.add(run["Object"])
-            if os.path.exists(runfilename):
-                with open(runfilename, "rb") as f:
-                    runobject = pickle.load(f)
-            else:
-                runobject = {
-                    "RUN": "Run{}".format(runnumber),
-                    "modules": defaultdict(dict),
-                }
-            runlog_mod = {"stats": run, "title": "Run log"}
-
-            runobject["modules"]["runlog"].update(runlog_mod)
-            with open(runfilename, "wb") as f:
-                runobject = pickle.dump(runobject, f)
-        with open(
-            os.path.join(self.display_path, "db", "rundb.pkl"), "wb"
-        ) as rundbfile:
-            pickle.dump(rundb, rundbfile)
-
+        plugins = []
+        for p in submitplugin.ServerSubmitPluginBase.subclasses:
+            plugins.append(p())
+        for p in plugins:
+            try:
+                dbentries = p.generate_submit(None)
+                for dbentry in dbentries:
+                    self.cmd_submit(dbentry)
+            except Exception as e:
+                    print(
+                        f"An exception occured while plugin `{p.short_name}` was executing"
+                    )
+                    print(f"    `{e}`")
         return "success"
 
     def cmd_update_from_runlog(self, args):

@@ -27,8 +27,8 @@ from target_calib import CameraConfiguration
 from CHECLabPy.utils.mapping import get_clp_mapping_from_tc_mapping
 import datetime
 from crundb.utils import savefig_to_buffer, make_field
-
-
+from crundb.core.records import DBEntry
+from crundb.core.sval import SVal
 class ImagePlotter(Plotter):
     def __init__(self, mapping):
 
@@ -74,6 +74,7 @@ class TriggerPatternSubmit(SubmitPluginBase):
         else:
             return None
         reader = DataReader(filename)
+        dbentry = DBEntry(run_name,self.short_name)
         print(reader)
         triggs = reader[:]
         mean_rate = len(triggs) / (triggs[-1].TACK - triggs[0].TACK) * 1e9
@@ -218,37 +219,23 @@ class TriggerPatternSubmit(SubmitPluginBase):
             dt = start_time - datetime.datetime(date.year, date.month, date.day)
             if dt.seconds < 3600 * 6:
                 date = date.replace(day=date.day - 1)
-
-            dbentry = {
-                "RUN": run_name,
-                "modstats": {
+            dbentry.add_modstats({
                     "obsdate": date,
                     "run_start": start_time.time(),
                     "run_start_timestamp": reader.timestamp,
                     "ntriggs": reader.n_entries + int(np.sum(missedPackets.bincontent)),
                     "run_length": datetime.timedelta(seconds=run_length * 1e-9),
                     "rate": mean_rate,
-                },
-                "modules": {
-                    "figures": {
-                        "trigpat_diag": savefig_to_buffer(fig),
-                        "trig_heatmap_noflashcorr": savefig_to_buffer(p_image.fig),
-                        "trig_heatmap_withflashcorr": savefig_to_buffer(p_image2.fig),
-                        "trig_sps": savefig_to_buffer(p_image3.fig),
-                    },
-                    "stats": {
+                })
+            dbentry.add_stats({
                         "number of triggers": make_field(
                             "number of triggers",
                             int(np.sum(missedPackets.bincontent)) + reader.n_entries,
                         ),
-                        "mean rate": "{}{}Hz".format(*get_si_prefix(mean_rate)),
+                        "mean rate": SVal(mean_rate,"Hz"),
                         "lost trigger packets": int(np.sum(missedPackets.bincontent)),
-                        "max rate": "{}{}Hz".format(
-                            *get_si_prefix(np.max(triggRate.bincontent))
-                        ),
-                        "min rate": "{}{}Hz".format(
-                            *get_si_prefix(np.min(triggRate.bincontent))
-                        ),
+                        "max rate":  SVal(np.max(triggRate.bincontent),"Hz"),
+                        "min rate": SVal(np.min(triggRate.bincontent),"Hz"),
                         "number of triggering SPs": int(
                             np.sum(p_image3.ci_trigger.image)
                         ),
@@ -257,9 +244,13 @@ class TriggerPatternSubmit(SubmitPluginBase):
                         "fraction of triggering SPs": "{0:.2f}%".format(
                             np.sum(p_image3.ci_trigger.image) / 512.0 * 100
                         ),
-                    },
-                    "title": "Trigger patterns",
-                },
-            }
-
+                    })
+            dbentry.add_fig({
+                        "trigpat_diag": savefig_to_buffer(fig),
+                        "trig_heatmap_noflashcorr": savefig_to_buffer(p_image.fig),
+                        "trig_heatmap_withflashcorr": savefig_to_buffer(p_image2.fig),
+                        "trig_sps": savefig_to_buffer(p_image3.fig),
+                    })
+            dbentry.set_title("Trigger patterns")
+            plt.close('all')
             return dbentry

@@ -7,7 +7,7 @@ from crundb import utils
 import datetime
 
 
-class QueryCHECRunLog:
+class QueryGoogleSpreadSheet:
     def __init__(self, sheetid, tokenfile=None, credfile=None, scopes=None):
         self.creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
@@ -65,7 +65,7 @@ class QueryCHECRunLog:
 
 
 def query_chec_runlog():
-    chechrunlog = QueryCHECRunLog("1JsddNjCJ6xsGZfSLcxkZ39ArfXt4ryEUDJarfonAH_o")
+    chechrunlog = QueryGoogleSpreadSheet("1JsddNjCJ6xsGZfSLcxkZ39ArfXt4ryEUDJarfonAH_o")
     subsheets = chechrunlog.get_sub_sheet_ids()
     run_metadata = {}
     for title, sid in subsheets.items():
@@ -79,6 +79,7 @@ def query_chec_runlog():
         for row in values[1:]:
             tmpdict = {}
             run_metadata[row[runnumberfield]] = {}
+            print('Fetching data for Run{}'.format(row[runnumberfield]))
             for i, col in enumerate(row):
                 tmpdict[fields[i]] = col
 
@@ -100,7 +101,7 @@ def query_chec_runlog():
                 )
             else:
                 tmpdict["Approximate Duration (min)"] = None
-            print(tmpdict["Approximate Start Time"])
+            # print(tmpdict["Approximate Start Time"])
 
             if (
                 len(tmpdict["Approximate Start Time"]) > 0
@@ -121,6 +122,30 @@ def query_chec_runlog():
             run_metadata[row[runnumberfield]] = tmpdict
     return run_metadata
 
+from crundb.core.submitplugin import ServerSubmitPluginBase
+from crundb.core.records import DBEntry
 
+class QueryCHECRunLog(ServerSubmitPluginBase):
+    @property
+    def short_name(self):
+        return "runlog"
+
+    def generate_submit(self, args):
+        print("Updating runs from runlog...")
+        runs = query_chec_runlog()
+        dbentries = []
+        for runnumber, run in runs.items():
+            if not runnumber.isdigit():
+                continue
+            dbentry = DBEntry("Run{}".format(runnumber),"runlog")
+            dbentry.add_tag('logged')
+            if len(run["Run Type"]) > 1:
+                dbentry.add_tag(run["Run Type"])
+            if "Object" in run and len(run["Object"]) > 0 and run["Object"] != '-':
+                dbentry.add_tag(run["Object"])
+            dbentry.add_stats(run)
+            dbentry.set_title("Run log")
+            dbentries.append(dbentry)
+        return dbentries
 if __name__ == "__main__":
     query_chec_runlog()

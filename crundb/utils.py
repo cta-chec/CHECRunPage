@@ -116,7 +116,6 @@ def nestd_key_exist(d: dict, path: str):
         if k not in r:
             return False
         r = r[k]
-
     return True
 
 def nested_access(d: dict, *keys):
@@ -180,6 +179,10 @@ def _lam():
 
 
 class RunFilesRecord:
+
+    """Summary
+    """
+
     def __init__(self, run, filedefs, **kwargs):
         """Summary
 

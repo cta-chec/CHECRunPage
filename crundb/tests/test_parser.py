@@ -26,7 +26,7 @@ def test_eval_tag_exprs_andnot(test_sets):
     res = eval_tag_expr('fivesix ! even',sets)
     assert list(res) == [5], "Picking out 5 using andnot"
     res = eval_tag_expr('even ! fivesix',sets)
-    assert sorted(list(res)) == [0,2,4,8], "Picking out all even except 6 using andnot (andnot is not unitary)"
+    assert sorted(list(res)) == [0,2,4,8], "Picking out all even except 6 by reversing order (andnot is not unary)"
 
 
 
