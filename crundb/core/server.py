@@ -273,8 +273,7 @@ class Server:
                 self.n_runs_processed += 1
 ### SEPARATE PLUGIN ###
                 # should be put in separate plugin
-                # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
-                tstr = data["stats"]["run_length"]
+                tstr = dnest(data,"stats.run_length.val")
                 if len(tstr) > 3:
                     t = datetime.datetime.strptime(tstr, "%H:%M:%S")
                     delta = datetime.timedelta(
@@ -282,6 +281,8 @@ class Server:
                     )
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
+                else:
+                    self.tmp_runlist[data["RUN"]].add("short")
 ### END SEPARATE PLUGIN ###
             else:
                 self.log.error("No run found named {}".format(run))
@@ -389,7 +390,6 @@ class Server:
             tmp_tags = self.tmp_runlist[run]
             for tag in list(tags) + list(tmp_tags):
                 runtags[tag].append(run)
-
 
         indexes = self.page_config["Indexes"]["pages"]
 

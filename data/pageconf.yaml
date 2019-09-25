@@ -62,11 +62,11 @@ Indexes:
   pages:
     logged:
       title: Logged Runs
-      tags_sel: 'logged ! short'
+      tags_sel: 'logged'
       fields: *default_fields
     obs_runs:
       title: Observation Runs
-      tags_sel: 'logged  & (Mrk501 | Gamma | Mrk501 | Mrk421 | PG1553 | Unukalhai) ! (short | Pedestal)'
+      tags_sel: 'logged  & (Gamma | Mrk501 | Mrk421 | PG1553 | Unukalhai) ! (short | Ped | PED | Pedestal)'
       fields: *default_fields
     ped_runs:
       title: Pedestal Runs

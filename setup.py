@@ -12,7 +12,8 @@ install_requires = [
     "google-auth-httplib2",
     "google-auth-oauthlib",
     "Sphinx==1.6.7",
-    "parsimonious",
+    "lark-parser",
+
 ]
 
 #

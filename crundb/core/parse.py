@@ -1,79 +1,49 @@
-from parsimonious.grammar import Grammar
+from lark import Lark
+from lark import Transformer
+tag_parser = Lark(r"""
+    ?expr: term (operator term)*
+    ?term: tag | "(" expr ")"
+    tag: CNAME
+        | ESCAPED_STRING
+    operator: AND
+            | OR
+            | ANDNOT
 
-__all__ =['eval_tag_expr']
-grammar = Grammar(
-    """
-     #res       = (multiexpr)  (multiexpr)*
-     multiexpr = expr (expr)*
-     expr      = (op_brac  / bracketed  /  operation ) ws?
-     op_brac   = operator bracketed
-     operation = (operator tag) / tag
-     bracketed = "(" multiexpr ")"
-     operator  = ws (and / or / andnot) ws
-     and       = "&"
-     or        = "|"
-     andnot    = "!"
-     tag       = ~"[A-Z_0-9]*"i
-     ws        = ~"\s*"
-     """
-)
-"""     var       = ~"[A-Z_0-9]*"i
-     lit       = "'" var ws?  "'"
-     tag       = var /
-"""
-from parsimonious.nodes import NodeVisitor
+    AND : "&"
+    OR  : "|"
+    ANDNOT : "!"
 
-class IniVisitor(NodeVisitor):
-    def __init__(self):
-        self.operations = []
-        self.tags = []
+    %import common.ESCAPED_STRING
+    %import common.WS
+    %import common.CNAME
+    %ignore WS
 
-    def visit_bad(self, node, visited_children):
-        raise
-
-    def visit_bracketed(self, node, visited):
-        _, expr, _ = visited
-        return expr
-
-    def visit_operation(self, node, visited):
-        n = visited[0][0]
-        if n.expr_name == "tag":
-            tag = n
-            self.tags.append(tag.text)
-        else:
-            op, tag = visited[0][1]
-            self.tags.append(tag[0].text)
-            if len(self.tags) > 1:
-                self.operations.append(
-                    (op[0].expr_name, self.tags.pop(), self.tags.pop())
-                )
-            elif len(self.tags) == 1:
-                self.operations.append((op[0].expr_name, self.tags.pop()))
-
-    def visit_op_brac(self, node, visited):
-        op = visited[0][0].expr_name
-        if len(self.tags) == 1:
-            self.operations.append((op, self.tags.pop()))
-        elif len(self.tags) == 2:
-            v2 = self.tags.pop()
-            v1 = self.tags.pop()
-            self.operations.append((op, v1,v2 ))
-        else:
-            self.operations.append((op,))
-
-    def visit_operator(self, node, visited):
-        _, op, _ = visited
-        return op[0].children[0], visited
-
-    def visit_tag(self, node, visited):
-        #         print('TAG')
-        """ Gets the section name. """
-        return node, visited
-
-    def generic_visit(self, node, children):
-        return node, children
+    """,start='expr')
 
 
+class MyTransformer(Transformer):
+    def __init__(self,sets):
+        self.sets = sets
+    def expr(self,items):
+        v1 = items[0]
+        for i in range(1,len(items),2):
+            v2 = items[i+1]
+            op = items[i]
+            if op == 'AND':
+                v1 = v1.intersection(v2)
+            elif op == 'OR':
+                v1 = v1.union(v2)
+            elif op == 'ANDNOT':
+                v1 = v1.difference(v2.intersection(v1))
+
+        return v1
+    def tag(self,items):
+        if items[0].value not in self.sets:
+           raise SyntaxError("Variable `{}` is not defined as tag at col {}".format(items[0].value,items[0].column))
+        return set(self.sets[items[0].value])
+
+    def operator(self,items):
+        return items[0].type
 
 def eval_tag_expr(expr:str,retr_val:dict):
     """Summary
@@ -86,47 +56,9 @@ def eval_tag_expr(expr:str,retr_val:dict):
         TYPE: Description
     """
     # parsing the grammar
-    tree = grammar.parse(expr)
-    cv = IniVisitor()
-    cv.visit(tree)
-    ops = []
-    for op in cv.operations:
-        if len(op)>1:
-            ops.append(list(op[1:]))
-        ops.append(op[0])
 
-    if len(ops)==0:
-        ops.append([cv.tags[0]])
+    tree = tag_parser.parse(expr)
+    return MyTransformer(retr_val).transform(tree)
 
-    #making an operations stack
-    stack = []
-    for op in ops:
-        if isinstance(op,list):
-            for tag in op:
-                stack.append(set(retr_val[tag]))
-        else:
-            stack.append(op)
 
-    stack = list(reversed(stack))
-    #exectuing the operations
-    val_stack = []
-    while len(stack)>0:
-        op = stack.pop()
-        if isinstance(op,str):
-            v1 = val_stack.pop()
-            v2 = val_stack.pop()
-            if op == 'and':
-                stack.append(v1.intersection(v2))
-            elif op == 'or':
-                stack.append(v1.union(v2))
-            elif op == 'andnot':
-                stack.append(v2.difference(v1.intersection(v2)))
-        else:
-            #This is non-trivial
-            #The current value of the computation is put at
-            #the last element of the list while subsequent values
-            #(to be operated on) are
-            #pushed behind that last value.
-            val_stack.insert(-1,op)
 
-    return val_stack.pop()

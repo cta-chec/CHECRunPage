@@ -44,3 +44,10 @@ def test_eval_tag_exprs_nested_parentheses(test_sets):
     assert sorted(list(res)) == [5,6],"Correct result for: `fivesix | (whole & (even & fivesix))`"
     res = eval_tag_expr('(fivesix | whole) & (even & fivesix)',copy.copy(sets))
     assert sorted(list(res)) == [6], "Correct result for: `(fivesix | whole) & (even & fivesix)`"
+def test_eval_tag_exprs_multi_parentheses(test_sets):
+    sets = test_sets
+    res = eval_tag_expr('whole  & (even | fivesix | fivesix | fivesix) ! (odd | fivesix)',sets)
+    # res = eval_tag_expr('whole & (even | (fivesix | fivesix) | fivesix) ',sets)
+    # res = eval_tag_expr('even|odd|whole',sets)
+    assert sorted(list(res)) == [0,2,4,8]
+
