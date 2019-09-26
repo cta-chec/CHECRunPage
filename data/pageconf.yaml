@@ -66,7 +66,7 @@ Indexes:
       fields: *default_fields
     obs_runs:
       title: Observation Runs
-      tags_sel: 'logged  & (Gamma | Mrk501 | Mrk421 | PG1553 | Unukalhai) ! (short | Ped | PED | Pedestal)'
+      tags_sel: 'logged  & (Gamma | Mrk501 | Mrk421 | "PG1553+113" | PG1553 | Unukalhai) ! (short | Ped | PED | Pedestal)'
       fields: *default_fields
     ped_runs:
       title: Pedestal Runs

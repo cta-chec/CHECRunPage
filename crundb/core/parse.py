@@ -38,6 +38,8 @@ class MyTransformer(Transformer):
 
         return v1
     def tag(self,items):
+        if '"' in items[0].value:
+            items[0].value = items[0].value[1:-1]
         if items[0].value not in self.sets:
            raise SyntaxError("Variable `{}` is not defined as tag at col {}".format(items[0].value,items[0].column))
         return set(self.sets[items[0].value])
