@@ -1,6 +1,6 @@
 import crundb
+from crundb.core import submitplugin
 from crundb.utils import Daemon
-from crundb.modules import qchecrunlog
 from crundb.utils import (
     printNiceTimeDelta,
     nested_access,
@@ -110,7 +110,7 @@ class Server:
             utils.create_dir(nf)
 
         self.lib_path = os.path.join(self.path, "crundb")
-        self.template_dir = os.path.join(self.lib_path, "templates")
+        self.template_dir = os.path.join(utils.get_data_folder(), "templates")
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
         if not os.path.exists(os.path.join(self.display_path, "db", "rundb.pkl")):
             with open(
@@ -177,7 +177,6 @@ class Server:
         Returns:
             TYPE: Description
         """
-        print("submitting")
         with open(
             os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
         ) as rundbfile:
@@ -217,45 +216,19 @@ class Server:
         Returns:
             TYPE: Description
         """
-        print("Updating runs from runlog...")
-        runs = qchecrunlog.query_chec_runlog()
-        try:
-            with open(
-                os.path.join(self.display_path, "db", "rundb.pkl"), "rb"
-            ) as rundbfile:
-                rundb = pickle.load(rundbfile)
-        except:
-            rundb = defaultdict(set)
-        for runnumber, run in runs.items():
-            if not runnumber.isdigit():
-                continue
-            runfilename = os.path.join(
-                self.run_data_path, "Run{}.pkl".format(runnumber)
-            )
-            tags = rundb["Run{}".format(runnumber)]
-            tags.add("logged")
-            if len(run["Run Type"]) > 1:
-                tags.add(run["Run Type"])
-            if "Object" in run and len(run["Object"]) > 0:
-                tags.add(run["Object"])
-            if os.path.exists(runfilename):
-                with open(runfilename, "rb") as f:
-                    runobject = pickle.load(f)
-            else:
-                runobject = {
-                    "RUN": "Run{}".format(runnumber),
-                    "modules": defaultdict(dict),
-                }
-            runlog_mod = {"stats": run, "title": "Run log"}
-
-            runobject["modules"]["runlog"].update(runlog_mod)
-            with open(runfilename, "wb") as f:
-                runobject = pickle.dump(runobject, f)
-        with open(
-            os.path.join(self.display_path, "db", "rundb.pkl"), "wb"
-        ) as rundbfile:
-            pickle.dump(rundb, rundbfile)
-
+        plugins = []
+        for p in submitplugin.ServerSubmitPluginBase.subclasses:
+            plugins.append(p())
+        for p in plugins:
+            try:
+                dbentries = p.generate_submit(None)
+                for dbentry in dbentries:
+                    self.cmd_submit(dbentry)
+            except Exception as e:
+                    print(
+                        f"An exception occured while plugin `{p.short_name}` was executing"
+                    )
+                    print(f"    `{e}`")
         return "success"
 
     def cmd_update_from_runlog(self, args):
@@ -300,8 +273,7 @@ class Server:
                 self.n_runs_processed += 1
 ### SEPARATE PLUGIN ###
                 # should be put in separate plugin
-                # pconf = dnest(self.page_config,"RunSummary.sourceoptions")# self.page_config["RunSummary"]["sourceoptions"]
-                tstr = data["stats"]["run_length"]
+                tstr = dnest(data,"stats.run_length.val")
                 if len(tstr) > 3:
                     t = datetime.datetime.strptime(tstr, "%H:%M:%S")
                     delta = datetime.timedelta(
@@ -309,6 +281,8 @@ class Server:
                     )
                     if delta.seconds < 120:
                         self.tmp_runlist[data["RUN"]].add("short")
+                else:
+                    self.tmp_runlist[data["RUN"]].add("short")
 ### END SEPARATE PLUGIN ###
             else:
                 self.log.error("No run found named {}".format(run))
@@ -410,13 +384,12 @@ class Server:
 
     def generate_indexpage(self, page_data,rundb):
 
-        indextemplate = self.env.get_template("indextemplate.j2")
+        indextemplate = self.env.get_template("run_index_template.j2")
         runtags = defaultdict(list)
         for run, tags in sorted(rundb.items()):
             tmp_tags = self.tmp_runlist[run]
             for tag in list(tags) + list(tmp_tags):
                 runtags[tag].append(run)
-
 
         indexes = self.page_config["Indexes"]["pages"]
 
@@ -445,11 +418,12 @@ class Server:
         # defining columns for the table
         cols = ["Run"] + [field["label"] for k, field in conf["fields"].items()]
         toc_path = []
-        stack = parse.parse(expr=conf['tags_sel'],retr_val=runtags)
+        #evaluate tag selection expression in configuration
+        sel_runs = parse.eval_tag_expr(expr=conf['tags_sel'],retr_val=runtags)
 
 
         # Create run list page
-        for run in sorted(stack.pop()):
+        for run in sorted(sel_runs):
             toc_path.append("runs/" + run)
             row = {"Run": ":ref:`{}`".format(run)}
             for field, settings in conf["fields"].items():

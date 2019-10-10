@@ -21,13 +21,13 @@ RunPage:
   Formating:
     - func: apply_formatting
       args:
-        keys: "stats.run_start"
+        keys: "stats.run_start.val"
         cond: datetime.time
         func: 'lambda x: "+" + str(x) if x.hour < 6 else x'
     - func: apply_formatting
       args:
-        keys: "stats.run_length"
-        cond: datetime.time
+        keys: "stats.run_length.val"
+        cond: datetime.timedelta
         func: printNiceTimeDelta
     - func: apply_formatting
       args:
@@ -62,11 +62,11 @@ Indexes:
   pages:
     logged:
       title: Logged Runs
-      tags_sel: 'logged ! short'
+      tags_sel: 'logged'
       fields: *default_fields
     obs_runs:
       title: Observation Runs
-      tags_sel: 'logged  & (Mrk501 | Gamma | Mrk501 | Mrk421 | PG1553 | Unukalhai) ! (short | Pedestal)'
+      tags_sel: 'logged  & (Gamma | Mrk501 | Mrk421 | "PG1553+113" | PG1553 | Unukalhai) ! (short | Ped | PED | Pedestal)'
       fields: *default_fields
     ped_runs:
       title: Pedestal Runs
